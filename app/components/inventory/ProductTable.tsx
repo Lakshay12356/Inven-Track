@@ -15,38 +15,40 @@ const ProductTable: React.FC<ProductTableProps> = ({ products, searchTerm }) => 
   }, [products, searchTerm]);
 
   return (
-    <div className="bg-white rounded-xl shadow-lg overflow-hidden">
-      <table className="min-w-full divide-y divide-gray-200">
-        <thead className="bg-gray-50">
-          <tr>
-            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Product Name</th>
-            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">SKU</th>
-            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Stock</th>
-            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Price</th>
-            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Last Updated</th>
-          </tr>
-        </thead>
-        <tbody className="bg-white divide-y divide-gray-200">
-          {filteredProducts.map((product) => (
-            <tr key={product.id} className="hover:bg-gray-50 transition duration-75">
-              <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{product.name}</td>
-              <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{product.sku}</td>
-              <td className={`px-6 py-4 whitespace-nowrap text-sm font-semibold ${product.stock < 50 ? 'text-red-600' : 'text-green-600'}`}>
-                {product.stock}
-              </td>
-              <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${product.price.toFixed(2)}</td>
-              <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{product.lastUpdated}</td>
-            </tr>
-          ))}
-          {filteredProducts.length === 0 && (
+    <div className="glass dark:glass-dark rounded-3xl shadow-lg overflow-hidden border border-white/30 dark:border-white/10">
+      <div className="overflow-x-auto">
+        <table className="min-w-full divide-y divide-white/20 dark:divide-white/10">
+          <thead className="glass dark:glass-dark">
             <tr>
-              <td colSpan={5} className="text-center py-10 text-gray-500">
-                No products found matching "{searchTerm}".
-              </td>
+              <th className="px-3 sm:px-6 py-3 sm:py-4 text-left text-xs font-semibold text-gray-600 dark:text-gray-300 uppercase tracking-wider">Product Name</th>
+              <th className="px-3 sm:px-6 py-3 sm:py-4 text-left text-xs font-semibold text-gray-600 dark:text-gray-300 uppercase tracking-wider">SKU</th>
+              <th className="px-3 sm:px-6 py-3 sm:py-4 text-left text-xs font-semibold text-gray-600 dark:text-gray-300 uppercase tracking-wider">Stock</th>
+              <th className="px-3 sm:px-6 py-3 sm:py-4 text-left text-xs font-semibold text-gray-600 dark:text-gray-300 uppercase tracking-wider">Price</th>
+              <th className="px-3 sm:px-6 py-3 sm:py-4 text-left text-xs font-semibold text-gray-600 dark:text-gray-300 uppercase tracking-wider hidden sm:table-cell">Last Updated</th>
             </tr>
-          )}
-        </tbody>
-      </table>
+          </thead>
+          <tbody className="divide-y divide-white/10 dark:divide-white/5">
+            {filteredProducts.map((product) => (
+              <tr key={product.id} className="glass-hover hover:bg-white/50 dark:hover:bg-white/10 transition-all duration-300">
+                <td className="px-3 sm:px-6 py-3 sm:py-4 whitespace-nowrap text-sm font-medium text-gray-800 dark:text-gray-200">{product.name}</td>
+                <td className="px-3 sm:px-6 py-3 sm:py-4 whitespace-nowrap text-sm text-gray-600 dark:text-gray-300">{product.sku}</td>
+                <td className={`px-3 sm:px-6 py-3 sm:py-4 whitespace-nowrap text-sm font-semibold ${product.stock < 50 ? 'text-red-500 dark:text-red-400' : 'text-green-500 dark:text-green-400'}`}>
+                  {product.stock}
+                </td>
+                <td className="px-3 sm:px-6 py-3 sm:py-4 whitespace-nowrap text-sm text-gray-600 dark:text-gray-300">${product.price.toFixed(2)}</td>
+                <td className="px-3 sm:px-6 py-3 sm:py-4 whitespace-nowrap text-sm text-gray-600 dark:text-gray-300 hidden sm:table-cell">{product.lastUpdated}</td>
+              </tr>
+            ))}
+            {filteredProducts.length === 0 && (
+              <tr>
+                <td colSpan={5} className="text-center py-10 text-gray-500 dark:text-gray-400 px-4">
+                  No products found matching "{searchTerm}".
+                </td>
+              </tr>
+            )}
+          </tbody>
+        </table>
+      </div>
     </div>
   );
 };

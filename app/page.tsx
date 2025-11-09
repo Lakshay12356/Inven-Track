@@ -12,12 +12,14 @@ import ProfileContent from '@/app/components/profile/ProfileContent';
 import BranchesContent from '@/app/components/branches/BranchesContent';
 import { useProducts } from '@/app/hooks/useProducts';
 import { useDeliveryPartners } from '@/app/hooks/useDeliveryPartners';
+import Loading from '@/app/components/ui/Loading';
 
 const App: React.FC = () => {
   const { isSignedIn, isLoaded } = useAuth();
   const { user } = useUser();
   const router = useRouter();
   const [activeTab, setActiveTab] = React.useState('Dashboard');
+  const [isSidebarOpen, setIsSidebarOpen] = React.useState(false);
   const { products, setProducts, addProduct } = useProducts();
   const { partners } = useDeliveryPartners();
 
@@ -28,14 +30,7 @@ const App: React.FC = () => {
   }, [isLoaded, isSignedIn, router]);
 
   if (!isLoaded || !isSignedIn) {
-    return (
-      <div className="flex min-h-screen items-center justify-center bg-gray-100">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-600 mx-auto"></div>
-          <p className="mt-4 text-gray-600">Loading...</p>
-        </div>
-      </div>
-    );
+    return <Loading size="lg" text="Loading..." fullScreen />;
   }
 
   const renderContent = () => {
@@ -56,13 +51,30 @@ const App: React.FC = () => {
   };
 
   return (
-    <div className="flex min-h-screen bg-gray-100">
-      <Sidebar activeTab={activeTab} setActiveTab={setActiveTab} />
+    <div className="flex min-h-screen">
+      {/* Mobile Overlay */}
+      {isSidebarOpen && (
+        <div 
+          className="fixed inset-0 bg-black/50 z-40 lg:hidden"
+          onClick={() => setIsSidebarOpen(false)}
+        />
+      )}
       
-      <main className="flex-1 overflow-x-hidden overflow-y-auto">
-        <Header activeTab={activeTab} setActiveTab={setActiveTab} />
+      <Sidebar 
+        activeTab={activeTab} 
+        setActiveTab={setActiveTab}
+        isOpen={isSidebarOpen}
+        onClose={() => setIsSidebarOpen(false)}
+      />
+      
+      <main className="flex-1 overflow-x-hidden overflow-y-auto w-full lg:w-auto">
+        <Header 
+          activeTab={activeTab} 
+          setActiveTab={setActiveTab}
+          onMenuClick={() => setIsSidebarOpen(!isSidebarOpen)}
+        />
         
-        <section className="max-w-7xl mx-auto pb-12">
+        <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pb-12">
           {renderContent()}
         </section>
       </main>

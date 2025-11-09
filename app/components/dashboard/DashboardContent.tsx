@@ -3,6 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import { DollarSign, Package, Truck, Users, BarChart3 } from 'lucide-react';
 import Card from '@/app/components/ui/Card';
+import Loading from '@/app/components/ui/Loading';
 import { getAnalytics } from '@/app/lib/api/analytics';
 import { AnalyticsData } from '@/app/types';
 
@@ -31,66 +32,60 @@ const DashboardContent: React.FC = () => {
   }, []);
 
   if (loading) {
-    return (
-      <div className="p-8">
-        <div className="flex items-center justify-center h-64">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-600"></div>
-        </div>
-      </div>
-    );
+    return <Loading size="md" text="Loading dashboard..." />;
   }
 
   return (
-    <div className="p-8 space-y-8">
-      <h1 className="text-4xl font-bold text-gray-800">Main Dashboard</h1>
+    <div className="p-4 sm:p-6 lg:p-8 space-y-6 sm:space-y-8">
+      <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold text-gray-800 dark:text-gray-100">Main Dashboard</h1>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
         <Card
           title="Total Revenue (YTD)"
           value={`$${analytics.totalRevenue.toLocaleString()}`}
           icon={DollarSign}
-          colorClass="text-green-600"
+          colorClass="text-green-500"
         />
         <Card
           title="Products In Stock"
           value={analytics.productsInStock.toLocaleString()}
           icon={Package}
-          colorClass="text-indigo-600"
+          colorClass="text-blue-500"
         />
         <Card
           title="Active Deliveries"
           value={analytics.activeDeliveries.toLocaleString()}
           icon={Truck}
-          colorClass="text-yellow-600"
+          colorClass="text-amber-500"
         />
         <Card
           title="New Customers (Q3)"
           value={analytics.newCustomers.toLocaleString()}
           icon={Users}
-          colorClass="text-pink-600"
+          colorClass="text-pink-500"
         />
       </div>
 
-    <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-      <div className="lg:col-span-2 bg-white p-6 rounded-xl shadow-lg">
-        <h2 className="text-xl font-semibold text-gray-800 mb-4">Inventory Value Trend</h2>
-        <div className="h-64 flex items-center justify-center bg-gray-50 rounded-lg border border-dashed border-gray-300">
-          <BarChart3 className="w-10 h-10 text-indigo-300 mr-2" />
-          <p className="text-gray-500">Analytics Chart Placeholder</p>
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 sm:gap-6">
+        <div className="lg:col-span-2 glass dark:glass-dark glass-hover p-4 sm:p-6 rounded-3xl shadow-lg">
+          <h2 className="text-lg sm:text-xl font-semibold text-gray-800 dark:text-gray-200 mb-4">Inventory Value Trend</h2>
+          <div className="h-48 sm:h-64 flex items-center justify-center glass dark:glass-dark rounded-2xl border border-white/30 dark:border-white/10">
+            <BarChart3 className="w-8 h-8 sm:w-10 sm:h-10 text-blue-300 dark:text-blue-400 mr-2" />
+            <p className="text-sm sm:text-base text-gray-500 dark:text-gray-400">Analytics Chart Placeholder</p>
+          </div>
+        </div>
+        <div className="glass dark:glass-dark glass-hover p-4 sm:p-6 rounded-3xl shadow-lg">
+          <h2 className="text-lg sm:text-xl font-semibold text-gray-800 dark:text-gray-200 mb-4">Stock Alerts</h2>
+          <ul className="space-y-2 sm:space-y-3">
+            <li className="p-3 sm:p-4 glass dark:glass-dark rounded-2xl border-l-4 border-red-400 dark:border-red-500">
+              <span className="font-medium text-red-700 dark:text-red-400">Low Stock:</span> USB-C Docking Station (10 units)
+            </li>
+            <li className="p-3 sm:p-4 glass dark:glass-dark rounded-2xl border-l-4 border-amber-400 dark:border-amber-500">
+              <span className="font-medium text-amber-700 dark:text-amber-400">Reorder Soon:</span> 4K Ultra Monitor (30 units)
+            </li>
+          </ul>
         </div>
       </div>
-      <div className="bg-white p-6 rounded-xl shadow-lg">
-        <h2 className="text-xl font-semibold text-gray-800 mb-4">Stock Alerts</h2>
-        <ul className="space-y-3">
-          <li className="p-3 bg-red-50 border-l-4 border-red-500 rounded-md">
-            <span className="font-medium text-red-800">Low Stock:</span> USB-C Docking Station (10 units)
-          </li>
-          <li className="p-3 bg-yellow-50 border-l-4 border-yellow-500 rounded-md">
-            <span className="font-medium text-yellow-800">Reorder Soon:</span> 4K Ultra Monitor (30 units)
-          </li>
-        </ul>
-      </div>
-    </div>
     </div>
   );
 };

@@ -50,62 +50,62 @@ const AddProductModal: React.FC<AddProductModalProps> = ({ isOpen, onClose, onAd
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center z-50">
-      <div className="bg-white p-8 rounded-xl shadow-2xl w-full max-w-lg">
+    <div className="fixed inset-0 bg-black/30 dark:bg-black/50 backdrop-blur-sm flex justify-center items-center z-50 p-4 overflow-y-auto">
+      <div className="glass dark:glass-dark p-4 sm:p-6 lg:p-8 rounded-3xl shadow-2xl w-full max-w-lg border border-white/30 dark:border-white/10 my-auto">
         <div className="flex justify-between items-center mb-6">
-          <h2 className="text-2xl font-bold text-gray-800">Add New Product</h2>
-          <button onClick={onClose} className="text-gray-400 hover:text-gray-600">
-            <X className="w-6 h-6" />
+          <h2 className="text-2xl font-bold text-gray-800 dark:text-gray-200">Add New Product</h2>
+          <button onClick={onClose} className="glass dark:glass-dark p-2 rounded-2xl text-gray-400 dark:text-gray-500 hover:text-gray-600 dark:hover:text-gray-300 hover:bg-white/80 dark:hover:bg-white/10 transition-all duration-300">
+            <X className="w-5 h-5" />
           </button>
         </div>
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
-            <label htmlFor="name" className="block text-sm font-medium text-gray-700">Product Name</label>
+            <label htmlFor="name" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Product Name</label>
             <input
               type="text"
               name="name"
               id="name"
               value={newProduct.name}
               onChange={handleInputChange}
-              className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2 focus:ring-indigo-500 focus:border-indigo-500"
+              className="glass dark:glass-dark w-full rounded-2xl shadow-sm p-3 text-gray-700 dark:text-gray-200 focus:ring-2 focus:ring-blue-400 focus:outline-none border border-white/30 dark:border-white/10"
               required
             />
           </div>
           <div>
-            <label htmlFor="sku" className="block text-sm font-medium text-gray-700">SKU</label>
+            <label htmlFor="sku" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">SKU</label>
             <input
               type="text"
               name="sku"
               id="sku"
               value={newProduct.sku}
               onChange={handleInputChange}
-              className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2 focus:ring-indigo-500 focus:border-indigo-500"
+              className="glass dark:glass-dark w-full rounded-2xl shadow-sm p-3 text-gray-700 dark:text-gray-200 focus:ring-2 focus:ring-blue-400 focus:outline-none border border-white/30 dark:border-white/10"
               required
             />
           </div>
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <label htmlFor="stock" className="block text-sm font-medium text-gray-700">Stock Quantity</label>
+              <label htmlFor="stock" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Stock Quantity</label>
               <input
                 type="number"
                 name="stock"
                 id="stock"
                 value={newProduct.stock}
                 onChange={handleInputChange}
-                className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2 focus:ring-indigo-500 focus:border-indigo-500"
+                className="glass dark:glass-dark w-full rounded-2xl shadow-sm p-3 text-gray-700 dark:text-gray-200 focus:ring-2 focus:ring-blue-400 focus:outline-none border border-white/30 dark:border-white/10"
                 min="0"
                 required
               />
             </div>
             <div>
-              <label htmlFor="price" className="block text-sm font-medium text-gray-700">Price ($)</label>
+              <label htmlFor="price" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Price ($)</label>
               <input
                 type="number"
                 name="price"
                 id="price"
                 value={newProduct.price}
                 onChange={handleInputChange}
-                className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2 focus:ring-indigo-500 focus:border-indigo-500"
+                className="glass dark:glass-dark w-full rounded-2xl shadow-sm p-3 text-gray-700 dark:text-gray-200 focus:ring-2 focus:ring-blue-400 focus:outline-none border border-white/30 dark:border-white/10"
                 step="0.01"
                 min="0"
                 required
@@ -113,7 +113,7 @@ const AddProductModal: React.FC<AddProductModalProps> = ({ isOpen, onClose, onAd
             </div>
           </div>
           {error && (
-            <div className="p-3 bg-red-100 text-red-800 rounded-lg text-sm">
+            <div className="p-4 glass dark:glass-dark rounded-2xl border border-red-200 dark:border-red-800 text-red-700 dark:text-red-400 text-sm">
               {error}
             </div>
           )}
@@ -121,7 +121,7 @@ const AddProductModal: React.FC<AddProductModalProps> = ({ isOpen, onClose, onAd
             <button
               type="submit"
               disabled={loading}
-              className="w-full py-3 bg-indigo-600 text-white font-semibold rounded-lg shadow-md hover:bg-indigo-700 transition duration-150 disabled:bg-indigo-400 disabled:cursor-not-allowed"
+              className="w-full py-3 glass dark:glass-dark glass-hover text-gray-700 dark:text-gray-200 font-semibold rounded-2xl shadow-lg hover:bg-white/90 dark:hover:bg-white/10 transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed"
             >
               {loading ? 'Saving...' : 'Save Product'}
             </button>
