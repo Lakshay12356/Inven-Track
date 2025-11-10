@@ -14,7 +14,6 @@ const ProfileContent: React.FC = () => {
         <div className="w-full max-w-4xl">
           <UserProfile
             appearance={{
-              baseTheme: theme === 'dark' ? 'dark' : undefined,
               variables: {
                 colorPrimary: theme === 'dark' ? '#3b82f6' : '#2563eb',
                 colorBackground: theme === 'dark' ? '#1e293b' : '#ffffff',

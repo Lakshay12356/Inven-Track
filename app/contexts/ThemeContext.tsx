@@ -39,10 +39,8 @@ export const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     setTheme((prev) => (prev === 'light' ? 'dark' : 'light'));
   };
 
-  if (!mounted) {
-    return <>{children}</>;
-  }
-
+  // Always provide the context, even during SSR
+  // Use the current theme state (defaults to 'light' during SSR)
   return (
     <ThemeContext.Provider value={{ theme, toggleTheme }}>
       {children}

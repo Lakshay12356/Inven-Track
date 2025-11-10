@@ -85,3 +85,4 @@ CREATE POLICY "Allow public update customers" ON customers
 CREATE POLICY "Allow public delete customers" ON customers
   FOR DELETE USING (true);
 
+
