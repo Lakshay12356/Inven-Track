@@ -25,6 +25,7 @@ export interface Product {
   export type NavItem = {
     name: string;
     icon: React.ComponentType<any>;
+    path: string;
     comingSoon?: boolean;
   };
   

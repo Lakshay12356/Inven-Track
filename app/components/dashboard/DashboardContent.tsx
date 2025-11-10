@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
+import { useUser } from '@clerk/nextjs';
 import { DollarSign, Package, Truck, Users, BarChart3 } from 'lucide-react';
 import Card from '@/app/components/ui/Card';
 import Loading from '@/app/components/ui/Loading';
@@ -8,6 +9,7 @@ import { getAnalytics } from '@/app/lib/api/analytics';
 import { AnalyticsData } from '@/app/types';
 
 const DashboardContent: React.FC = () => {
+  const { user } = useUser();
   const [analytics, setAnalytics] = useState<AnalyticsData>({
     totalRevenue: 0,
     productsInStock: 0,
@@ -18,8 +20,11 @@ const DashboardContent: React.FC = () => {
 
   useEffect(() => {
     const fetchAnalytics = async () => {
+      if (!user?.id) return;
+      
       try {
-        const data = await getAnalytics();
+        const email = user.emailAddresses?.[0]?.emailAddress;
+        const data = await getAnalytics(user.id, email);
         setAnalytics(data);
       } catch (error) {
         console.error('Error fetching analytics:', error);
@@ -29,7 +34,7 @@ const DashboardContent: React.FC = () => {
     };
 
     fetchAnalytics();
-  }, []);
+  }, [user?.id, user?.emailAddresses]);
 
   if (loading) {
     return <Loading size="md" text="Loading dashboard..." />;

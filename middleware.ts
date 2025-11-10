@@ -8,6 +8,8 @@ export default clerkMiddleware(async (auth, request) => {
   }
 });
 
+// Note: Profile routes are protected but use catch-all routing for Clerk's UserProfile component
+
 export const config = {
   matcher: [
     // Skip Next.js internals and all static files, unless found in search params

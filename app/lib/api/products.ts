@@ -2,6 +2,7 @@
 
 import { createClient } from '../supabase-client';
 import { Product } from '@/app/types';
+import { getOrCreateUser } from './users';
 
 // Helper function to convert database row (snake_case) to Product (camelCase)
 const mapProductFromDB = (row: any): Product => ({
@@ -31,24 +32,39 @@ const mapProductToDB = (product: Omit<Product, 'id'> | Partial<Product>) => {
   return dbProduct;
 };
 
-export const getProducts = async (): Promise<Product[]> => {
+export const getProducts = async (clerkUserId: string, email?: string): Promise<Product[]> => {
   const supabase = createClient();
+  
+  // Get the Supabase user_id for this Clerk user
+  const userId = await getOrCreateUser(clerkUserId, email);
+  
   const { data, error } = await supabase
     .from('products')
     .select('*')
+    .eq('user_id', userId)
     .order('id', { ascending: false });
 
   if (error) {
-    console.error('Error fetching products:', error);
-    throw error;
+    console.error('Error fetching products:', {
+      message: error.message,
+      details: error.details,
+      hint: error.hint,
+      code: error.code
+    });
+    throw new Error(`Failed to fetch products: ${error.message || JSON.stringify(error)}`);
   }
 
   return (data || []).map(mapProductFromDB);
 };
 
-export const addProduct = async (product: Omit<Product, 'id'>): Promise<Product> => {
+export const addProduct = async (product: Omit<Product, 'id'>, clerkUserId: string, email?: string): Promise<Product> => {
   const supabase = createClient();
+  
+  // Get the Supabase user_id for this Clerk user
+  const userId = await getOrCreateUser(clerkUserId, email);
+  
   const dbProduct = mapProductToDB(product);
+  dbProduct.user_id = userId;
   
   const { data, error } = await supabase
     .from('products')
@@ -64,14 +80,19 @@ export const addProduct = async (product: Omit<Product, 'id'>): Promise<Product>
   return mapProductFromDB(data);
 };
 
-export const updateProduct = async (id: number, updates: Partial<Product>): Promise<Product> => {
+export const updateProduct = async (id: number, updates: Partial<Product>, clerkUserId: string, email?: string): Promise<Product> => {
   const supabase = createClient();
+  
+  // Get the Supabase user_id for this Clerk user
+  const userId = await getOrCreateUser(clerkUserId, email);
+  
   const dbUpdates = mapProductToDB(updates);
   
   const { data, error } = await supabase
     .from('products')
     .update(dbUpdates)
     .eq('id', id)
+    .eq('user_id', userId) // Ensure user can only update their own products
     .select()
     .single();
 
@@ -83,12 +104,17 @@ export const updateProduct = async (id: number, updates: Partial<Product>): Prom
   return mapProductFromDB(data);
 };
 
-export const deleteProduct = async (id: number): Promise<void> => {
+export const deleteProduct = async (id: number, clerkUserId: string, email?: string): Promise<void> => {
   const supabase = createClient();
+  
+  // Get the Supabase user_id for this Clerk user
+  const userId = await getOrCreateUser(clerkUserId, email);
+  
   const { error } = await supabase
     .from('products')
     .delete()
-    .eq('id', id);
+    .eq('id', id)
+    .eq('user_id', userId); // Ensure user can only delete their own products
 
   if (error) {
     console.error('Error deleting product:', error);
