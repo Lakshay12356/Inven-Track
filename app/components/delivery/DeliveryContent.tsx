@@ -1,28 +1,63 @@
 'use client';
 
 import React, { useState } from 'react';
-import { Truck } from 'lucide-react';
+import { Truck, Plus } from 'lucide-react';
+import { useUser } from '@clerk/nextjs';
 import { Product, DeliveryPartner } from '@/app/types';
+import AddDeliveryPartnerModal from './AddDeliveryPartnerModal';
+import AssignDeliveryModal from './AssignDeliveryModal';
+import { createDelivery } from '@/app/lib/api/deliveries';
 
 interface DeliveryContentProps {
   products: Product[];
   partners: DeliveryPartner[];
+  addPartner: (partner: Omit<DeliveryPartner, 'id'>) => Promise<DeliveryPartner>;
+  refreshProducts?: () => void;
 }
 
-const DeliveryContent: React.FC<DeliveryContentProps> = ({ products, partners }) => {
-  const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
-  const [selectedPartner, setSelectedPartner] = useState<DeliveryPartner | null>(null);
+const DeliveryContent: React.FC<DeliveryContentProps> = ({ products, partners, addPartner, refreshProducts }) => {
+  const { user } = useUser();
   const [assignmentMessage, setAssignmentMessage] = useState('');
+  const [isPartnerModalOpen, setIsPartnerModalOpen] = useState(false);
+  const [isAssignModalOpen, setIsAssignModalOpen] = useState(false);
 
-  const handleAssignment = () => {
-    if (selectedProduct && selectedPartner) {
-      setAssignmentMessage(`Successfully assigned ${selectedProduct.name} (SKU: ${selectedProduct.sku}) to ${selectedPartner.name}.`);
-      setSelectedProduct(null);
-      setSelectedPartner(null);
-      setTimeout(() => setAssignmentMessage(''), 5000);
-    } else {
-      setAssignmentMessage('Please select both a product and a delivery partner.');
+  const handleAssignDelivery = async (data: {
+    partnerId: number;
+    items: Array<{ productId: number; quantity: number }>;
+    customerName: string;
+    customerEmail: string;
+    customerPhone: string;
+    deliveryAddress: string;
+  }) => {
+    if (!user?.id) {
+      throw new Error('User not authenticated');
     }
+
+    const email = user.emailAddresses?.[0]?.emailAddress;
+    await createDelivery(
+      {
+        partnerId: data.partnerId,
+        items: data.items,
+        customerName: data.customerName,
+        customerEmail: data.customerEmail || undefined,
+        customerPhone: data.customerPhone || undefined,
+        deliveryAddress: data.deliveryAddress,
+      },
+      user.id,
+      email
+    );
+
+    // Refresh products to update stock
+    if (refreshProducts) {
+      refreshProducts();
+    }
+
+    const itemCount = data.items.length;
+    const partnerName = partners.find(p => p.id === data.partnerId)?.name || 'Partner';
+    setAssignmentMessage(
+      `Successfully assigned ${itemCount} product${itemCount > 1 ? 's' : ''} to ${partnerName} for delivery to ${data.customerName}.`
+    );
+    setTimeout(() => setAssignmentMessage(''), 5000);
   };
 
   return (
@@ -31,36 +66,16 @@ const DeliveryContent: React.FC<DeliveryContentProps> = ({ products, partners })
 
       {/* Assignment Panel */}
       <div className="glass dark:glass-dark p-4 sm:p-6 rounded-3xl shadow-lg border-l-4 border-indigo-500 dark:border-indigo-400">
-        <h2 className="text-xl sm:text-2xl font-semibold text-gray-800 dark:text-gray-200 mb-4">Assign Delivery</h2>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6">
-          <select
-            className="glass dark:glass-dark p-3 rounded-2xl border border-white/30 dark:border-white/10 text-gray-700 dark:text-gray-200 focus:ring-2 focus:ring-indigo-500 focus:outline-none"
-            value={selectedProduct ? selectedProduct.id : ''}
-            onChange={(e) => setSelectedProduct(products.find(p => p.id === parseInt(e.target.value, 10)) || null)}
+        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-4">
+          <h2 className="text-xl sm:text-2xl font-semibold text-gray-800 dark:text-gray-200">Assign Delivery</h2>
+          <button
+            onClick={() => setIsAssignModalOpen(true)}
+            className="w-full sm:w-auto px-6 py-3 glass dark:glass-dark glass-hover text-gray-700 dark:text-gray-200 font-semibold rounded-2xl shadow-lg hover:bg-white/90 dark:hover:bg-white/10 transition-all duration-300"
           >
-            <option value="" disabled>Select Product for Delivery</option>
-            {products.map(p => (
-              <option key={p.id} value={p.id}>{p.name} (Stock: {p.stock})</option>
-            ))}
-          </select>
-          <select
-            className="glass dark:glass-dark p-3 rounded-2xl border border-white/30 dark:border-white/10 text-gray-700 dark:text-gray-200 focus:ring-2 focus:ring-indigo-500 focus:outline-none"
-            value={selectedPartner ? selectedPartner.id : ''}
-            onChange={(e) => setSelectedPartner(partners.find(pa => pa.id === parseInt(e.target.value, 10)) || null)}
-          >
-            <option value="" disabled>Select Delivery Partner</option>
-            {partners.filter(p => p.status === 'Active').map(p => (
-              <option key={p.id} value={p.id}>{p.name} (Rating: {p.rating})</option>
-            ))}
-          </select>
+            <Plus className="w-4 h-4 sm:w-5 sm:h-5 inline mr-2" />
+            New Delivery Assignment
+          </button>
         </div>
-        <button
-          onClick={handleAssignment}
-          className="mt-6 w-full md:w-auto px-6 py-3 glass dark:glass-dark glass-hover text-gray-700 dark:text-gray-200 font-semibold rounded-2xl shadow-lg hover:bg-white/90 dark:hover:bg-white/10 transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed"
-          disabled={!selectedProduct || !selectedPartner}
-        >
-          Assign Product Delivery
-        </button>
 
         {assignmentMessage && (
           <div className={`mt-4 p-3 sm:p-4 rounded-2xl text-sm font-medium glass dark:glass-dark ${
@@ -75,9 +90,18 @@ const DeliveryContent: React.FC<DeliveryContentProps> = ({ products, partners })
 
       {/* Delivery Partners List */}
       <div className="glass dark:glass-dark rounded-3xl shadow-lg overflow-hidden border border-white/30 dark:border-white/10">
-        <h2 className="text-xl sm:text-2xl font-semibold text-gray-800 dark:text-gray-200 p-4 sm:p-6 border-b border-white/20 dark:border-white/10">
-          Delivery Partners ({partners.length})
-        </h2>
+        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center p-4 sm:p-6 border-b border-white/20 dark:border-white/10 gap-4">
+          <h2 className="text-xl sm:text-2xl font-semibold text-gray-800 dark:text-gray-200">
+            Delivery Partners ({partners.length})
+          </h2>
+          <button
+            onClick={() => setIsPartnerModalOpen(true)}
+            className="flex items-center px-4 sm:px-6 py-2 sm:py-3 glass dark:glass-dark glass-hover text-gray-700 dark:text-gray-200 font-medium rounded-2xl shadow-lg hover:bg-white/90 dark:hover:bg-white/10 transition-all duration-300 w-full sm:w-auto justify-center"
+          >
+            <Plus className="w-4 h-4 sm:w-5 sm:h-5 mr-2" />
+            Add Partner
+          </button>
+        </div>
         <div className="p-4 sm:p-6 space-y-3 sm:space-y-4">
           {partners.map(partner => (
             <div 
@@ -108,6 +132,22 @@ const DeliveryContent: React.FC<DeliveryContentProps> = ({ products, partners })
           ))}
         </div>
       </div>
+
+      {/* Add Delivery Partner Modal */}
+      <AddDeliveryPartnerModal
+        isOpen={isPartnerModalOpen}
+        onClose={() => setIsPartnerModalOpen(false)}
+        onAddPartner={addPartner}
+      />
+
+      {/* Assign Delivery Modal */}
+      <AssignDeliveryModal
+        isOpen={isAssignModalOpen}
+        onClose={() => setIsAssignModalOpen(false)}
+        products={products}
+        partners={partners}
+        onAssign={handleAssignDelivery}
+      />
     </div>
   );
 };

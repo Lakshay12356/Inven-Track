@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react';
 import { useUser } from '@clerk/nextjs';
 import { DeliveryPartner } from '@/app/types';
-import { getDeliveryPartners } from '@/app/lib/api/delivery-partners';
+import { getDeliveryPartners, addDeliveryPartner as addDeliveryPartnerToDB } from '@/app/lib/api/delivery-partners';
 
 export const useDeliveryPartners = () => {
   const { user } = useUser();
@@ -32,9 +32,26 @@ export const useDeliveryPartners = () => {
     fetchPartners();
   }, [user?.id, user?.emailAddresses]);
 
+  const addPartner = async (partner: Omit<DeliveryPartner, 'id'>) => {
+    if (!user?.id) {
+      throw new Error('User not authenticated');
+    }
+    
+    try {
+      const email = user.emailAddresses?.[0]?.emailAddress;
+      const newPartner = await addDeliveryPartnerToDB(partner, user.id, email);
+      setPartners(prev => [newPartner, ...prev]);
+      return newPartner;
+    } catch (err) {
+      setError(err instanceof Error ? err : new Error('Failed to add delivery partner'));
+      throw err;
+    }
+  };
+
   return {
     partners,
     setPartners,
+    addPartner,
     loading,
     error,
   };

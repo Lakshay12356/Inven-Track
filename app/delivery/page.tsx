@@ -7,14 +7,20 @@ import { useProducts } from '@/app/hooks/useProducts';
 import { useDeliveryPartners } from '@/app/hooks/useDeliveryPartners';
 
 export default function DeliveryPage() {
-  const { products } = useProducts();
-  const { partners } = useDeliveryPartners();
+  const { products, refreshProducts } = useProducts();
+  const { partners, addPartner } = useDeliveryPartners();
 
   return (
     <AppLayout>
-      <DeliveryContent products={products} partners={partners} />
+      <DeliveryContent 
+        products={products} 
+        partners={partners} 
+        addPartner={addPartner}
+        refreshProducts={refreshProducts}
+      />
     </AppLayout>
   );
 }
+
 
 

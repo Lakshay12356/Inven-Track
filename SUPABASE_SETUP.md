@@ -69,8 +69,11 @@ Create a table named `deliveries` with the following structure. Note: `user_id` 
 CREATE TABLE deliveries (
   id BIGSERIAL PRIMARY KEY,
   user_id BIGINT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
-  product_id BIGINT REFERENCES products(id) ON DELETE SET NULL,
   partner_id BIGINT REFERENCES delivery_partners(id) ON DELETE SET NULL,
+  customer_name TEXT NOT NULL,
+  customer_email TEXT,
+  customer_phone TEXT,
+  delivery_address TEXT NOT NULL,
   status TEXT NOT NULL DEFAULT 'pending' CHECK (status IN ('pending', 'active', 'completed', 'cancelled')),
   created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
   updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
@@ -78,6 +81,25 @@ CREATE TABLE deliveries (
 
 -- Create index for faster user-based queries
 CREATE INDEX idx_deliveries_user_id ON deliveries(user_id);
+CREATE INDEX idx_deliveries_partner_id ON deliveries(partner_id);
+```
+
+### 4a. Delivery Items Table (for multiple products per delivery)
+
+Create a table named `delivery_items` to track products and quantities for each delivery:
+
+```sql
+CREATE TABLE delivery_items (
+  id BIGSERIAL PRIMARY KEY,
+  delivery_id BIGINT NOT NULL REFERENCES deliveries(id) ON DELETE CASCADE,
+  product_id BIGINT NOT NULL REFERENCES products(id) ON DELETE CASCADE,
+  quantity INTEGER NOT NULL CHECK (quantity > 0),
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
+-- Create indexes for faster queries
+CREATE INDEX idx_delivery_items_delivery_id ON delivery_items(delivery_id);
+CREATE INDEX idx_delivery_items_product_id ON delivery_items(product_id);
 ```
 
 ### 5. Customers Table (Optional - for customer tracking)

@@ -48,10 +48,25 @@ export const useProducts = () => {
     }
   };
 
+  const refreshProducts = async () => {
+    if (!user?.id) return;
+    
+    try {
+      const email = user.emailAddresses?.[0]?.emailAddress;
+      const data = await getProducts(user.id, email);
+      setProducts(data);
+    } catch (err) {
+      const errorMessage = err instanceof Error ? err.message : 'Failed to refresh products';
+      setError(new Error(errorMessage));
+      console.error('Error refreshing products:', err);
+    }
+  };
+
   return {
     products,
     setProducts,
     addProduct,
+    refreshProducts,
     loading,
     error,
   };
