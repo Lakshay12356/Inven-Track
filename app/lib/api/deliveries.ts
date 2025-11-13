@@ -128,3 +128,55 @@ export const createDelivery = async (
   };
 };
 
+export const getDeliveries = async (
+  clerkUserId: string,
+  email?: string
+): Promise<Delivery[]> => {
+  const supabase = createClient();
+
+  const userId = await getOrCreateUser(clerkUserId, email);
+
+  const { data, error } = await supabase
+    .from('deliveries')
+    .select('*')
+    .eq('user_id', userId)
+    .order('created_at', { ascending: false });
+
+  if (error) {
+    console.error('Error fetching deliveries:', error);
+    throw new Error(`Failed to fetch deliveries: ${error.message}`);
+  }
+
+  return (data || []) as Delivery[];
+};
+
+export const updateDeliveryStatus = async (
+  deliveryId: number,
+  status: Delivery['status'],
+  clerkUserId: string,
+  email?: string
+): Promise<Delivery> => {
+  const supabase = createClient();
+
+  const userId = await getOrCreateUser(clerkUserId, email);
+
+  const { data, error } = await supabase
+    .from('deliveries')
+    .update({
+      status,
+      updated_at: new Date().toISOString(),
+    })
+    .eq('id', deliveryId)
+    .eq('user_id', userId)
+    .select()
+    .single();
+
+  if (error) {
+    console.error(`Error updating delivery ${deliveryId} status:`, error);
+    throw new Error(`Failed to update delivery status: ${error.message}`);
+  }
+
+  return data as Delivery;
+};
+
+

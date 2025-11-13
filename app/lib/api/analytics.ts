@@ -10,13 +10,63 @@ export const getAnalytics = async (clerkUserId: string, email?: string): Promise
   // Get the Supabase user_id for this Clerk user
   const userId = await getOrCreateUser(clerkUserId, email);
   
-  // Get total revenue from products (sum of price * stock) for this user
+  // Calculate revenue from completed deliveries
+  let revenueFromDeliveries = 0;
+  try {
+    // Get all completed deliveries for this user
+    const { data: completedDeliveries } = await supabase
+      .from('deliveries')
+      .select('id')
+      .eq('user_id', userId)
+      .eq('status', 'completed');
+
+    if (completedDeliveries && completedDeliveries.length > 0) {
+      const deliveryIds = completedDeliveries.map(d => d.id);
+      
+      // Get all delivery items for completed deliveries
+      const { data: deliveryItems } = await supabase
+        .from('delivery_items')
+        .select('product_id, quantity')
+        .in('delivery_id', deliveryIds);
+
+      if (deliveryItems && deliveryItems.length > 0) {
+        // Get product prices for all items
+        const productIds = [...new Set(deliveryItems.map(item => item.product_id))];
+        const { data: products } = await supabase
+          .from('products')
+          .select('id, price')
+          .in('id', productIds)
+          .eq('user_id', userId);
+
+        if (products) {
+          // Calculate revenue: sum of (price * quantity) for all completed delivery items
+          revenueFromDeliveries = deliveryItems.reduce((sum, item) => {
+            const product = products.find(p => p.id === item.product_id);
+            if (product) {
+              return sum + (product.price * item.quantity);
+            }
+            return sum;
+          }, 0);
+        }
+      }
+    }
+  } catch (error) {
+    console.warn('Error calculating revenue from deliveries:', error);
+  }
+
+  // Calculate cost of current inventory (this reduces revenue)
   const { data: products } = await supabase
     .from('products')
     .select('price, stock')
     .eq('user_id', userId);
 
-  const totalRevenue = products?.reduce((sum, p) => sum + (p.price * p.stock), 0) || 0;
+  const inventoryCost = products?.reduce((sum, p) => sum + (p.price * p.stock), 0) || 0;
+
+  // Total revenue = Revenue from completed deliveries - Cost of current inventory
+  // This means:
+  // - Adding inventory (increasing stock) decreases revenue (goes negative)
+  // - Completing deliveries increases revenue (goes positive)
+  const totalRevenue = revenueFromDeliveries - inventoryCost;
 
   // Get products in stock count for this user
   const { count: productsInStock } = await supabase

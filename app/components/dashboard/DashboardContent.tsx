@@ -82,10 +82,10 @@ const DashboardContent: React.FC = () => {
         <div className="glass dark:glass-dark glass-hover p-4 sm:p-6 rounded-3xl shadow-lg">
           <h2 className="text-lg sm:text-xl font-semibold text-gray-800 dark:text-gray-200 mb-4">Stock Alerts</h2>
           <ul className="space-y-2 sm:space-y-3">
-            <li className="p-3 sm:p-4 glass dark:glass-dark rounded-2xl border-l-4 border-red-400 dark:border-red-500">
+            <li className="p-3 sm:p-4 glass dark:glass-dark rounded-2xl border-l-4 border-red-400 dark:border-red-500 dark:text-gray-200">
               <span className="font-medium text-red-700 dark:text-red-400">Low Stock:</span> USB-C Docking Station (10 units)
             </li>
-            <li className="p-3 sm:p-4 glass dark:glass-dark rounded-2xl border-l-4 border-amber-400 dark:border-amber-500">
+            <li className="p-3 sm:p-4 glass dark:glass-dark rounded-2xl border-l-4 border-amber-400 dark:border-amber-500 dark:text-gray-200">
               <span className="font-medium text-amber-700 dark:text-amber-400">Reorder Soon:</span> 4K Ultra Monitor (30 units)
             </li>
           </ul>

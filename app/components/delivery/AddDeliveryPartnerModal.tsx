@@ -140,3 +140,4 @@ const AddDeliveryPartnerModal: React.FC<AddDeliveryPartnerModalProps> = ({ isOpe
 
 export default AddDeliveryPartnerModal;
 
+
