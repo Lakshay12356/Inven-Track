@@ -1,45 +1,85 @@
 'use client';
 
 import { createClient } from '../supabase-client';
-import { DeliveryPartner } from '@/app/types';
 import { getOrCreateUser } from './users';
 
-export const getDeliveryPartners = async (clerkUserId: string, email?: string): Promise<DeliveryPartner[]> => {
+export interface DeliveryPartnerData {
+  id: string;
+  store_id: string;
+  company_name: string;
+  contact_info: string | null;
+  created_at: string;
+}
+
+export const getDeliveryPartners = async (clerkUserId: string, email?: string): Promise<DeliveryPartnerData[]> => {
   const supabase = createClient();
-  
-  // Get the Supabase user_id for this Clerk user
   const userId = await getOrCreateUser(clerkUserId, email);
-  
+
+  // Get stores that belong to branches owned by this user
+  const { data: userBranches } = await supabase
+    .from('branches')
+    .select('id')
+    .eq('user_id', userId);
+
+  if (!userBranches || userBranches.length === 0) return [];
+
+  const branchIds = userBranches.map(b => b.id);
+
+  const { data: userStores } = await supabase
+    .from('stores')
+    .select('id')
+    .in('branch_id', branchIds);
+
+  if (!userStores || userStores.length === 0) return [];
+
+  const storeIds = userStores.map(s => s.id);
+
   const { data, error } = await supabase
     .from('delivery_partners')
     .select('*')
-    .eq('user_id', userId)
-    .order('id', { ascending: false });
+    .in('store_id', storeIds)
+    .order('created_at', { ascending: false });
 
   if (error) {
-    console.error('Error fetching delivery partners:', {
-      message: error.message,
-      details: error.details,
-      hint: error.hint,
-      code: error.code
-    });
-    throw new Error(`Failed to fetch delivery partners: ${error.message || JSON.stringify(error)}`);
+    console.error('Error fetching delivery partners:', error);
+    throw new Error(`Failed to fetch delivery partners: ${error.message}`);
   }
 
   return data || [];
 };
 
-export const addDeliveryPartner = async (partner: Omit<DeliveryPartner, 'id'>, clerkUserId: string, email?: string): Promise<DeliveryPartner> => {
+export const addDeliveryPartner = async (
+  partner: { store_id?: string; company_name: string; contact_info?: string },
+  clerkUserId: string,
+  email?: string
+): Promise<DeliveryPartnerData> => {
   const supabase = createClient();
-  
-  // Get the Supabase user_id for this Clerk user
   const userId = await getOrCreateUser(clerkUserId, email);
-  
-  const partnerWithUserId = { ...partner, user_id: userId };
-  
+
+  let targetStoreId = partner.store_id;
+
+  // Resolve a default store if one isn't explicitly provided
+  if (!targetStoreId) {
+    const { data: userBranches } = await supabase.from('branches').select('id').eq('user_id', userId).limit(1).single();
+    if (userBranches?.id) {
+      const { data: userStores } = await supabase.from('stores').select('id').eq('branch_id', userBranches.id).limit(1).single();
+      if (userStores?.id) {
+         targetStoreId = userStores.id;
+      }
+    }
+  }
+
+  if (!targetStoreId) {
+    throw new Error('No store available to attach the delivery partner to. Please create a store first.');
+  }
+
   const { data, error } = await supabase
     .from('delivery_partners')
-    .insert([partnerWithUserId])
+    .insert([{
+      store_id: targetStoreId,
+      company_name: partner.company_name,
+      contact_info: partner.contact_info || null,
+    }])
     .select()
     .single();
 
@@ -50,4 +90,3 @@ export const addDeliveryPartner = async (partner: Omit<DeliveryPartner, 'id'>, c
 
   return data;
 };
-

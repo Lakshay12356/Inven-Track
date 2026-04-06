@@ -6,8 +6,8 @@ import { useUser } from '@clerk/nextjs';
 import { Product, DeliveryPartner } from '@/app/types';
 import AddDeliveryPartnerModal from './AddDeliveryPartnerModal';
 import AssignDeliveryModal from './AssignDeliveryModal';
-import { createDelivery } from '@/app/lib/api/deliveries';
-import type { Delivery } from '@/app/lib/api/deliveries';
+import { createMovement } from '@/app/lib/api/deliveries';
+import type { InventoryMovement as Delivery } from '@/app/lib/api/deliveries';
 
 interface DeliveryContentProps {
   products: Product[];
@@ -18,7 +18,7 @@ interface DeliveryContentProps {
   addPartner: (partner: Omit<DeliveryPartner, 'id'>) => Promise<DeliveryPartner>;
   refreshProducts?: () => Promise<void> | void;
   refreshDeliveries: () => Promise<void>;
-  onUpdateDeliveryStatus: (deliveryId: number, status: Delivery['status']) => Promise<void>;
+  onUpdateDeliveryStatus: (deliveryId: string | number, status: string) => Promise<void>;
 }
 
 const DeliveryContent: React.FC<DeliveryContentProps> = ({
@@ -37,7 +37,7 @@ const DeliveryContent: React.FC<DeliveryContentProps> = ({
   const [isPartnerModalOpen, setIsPartnerModalOpen] = useState(false);
   const [isAssignModalOpen, setIsAssignModalOpen] = useState(false);
   const [isRefreshingDeliveries, setIsRefreshingDeliveries] = useState(false);
-  const [completingDeliveryId, setCompletingDeliveryId] = useState<number | null>(null);
+  const [completingDeliveryId, setCompletingDeliveryId] = useState<string | number | null>(null);
 
   const clearMessageAfterDelay = useCallback(() => {
     setTimeout(() => setAssignmentMessage(''), 5000);
@@ -50,8 +50,8 @@ const DeliveryContent: React.FC<DeliveryContentProps> = ({
   }, [refreshProducts]);
 
   const handleAssignDelivery = async (data: {
-    partnerId: number;
-    items: Array<{ productId: number; quantity: number }>;
+    partnerId: string | number;
+    items: Array<{ productId: string | number; quantity: number }>;
     customerName: string;
     customerEmail: string;
     customerPhone: string;
@@ -64,17 +64,19 @@ const DeliveryContent: React.FC<DeliveryContentProps> = ({
     const email = user.emailAddresses?.[0]?.emailAddress;
 
     try {
-      await createDelivery(
-        {
-          partnerId: data.partnerId,
-          items: data.items,
-          customerName: data.customerName,
-          customerEmail: data.customerEmail || undefined,
-          customerPhone: data.customerPhone || undefined,
-          deliveryAddress: data.deliveryAddress,
-        },
-        user.id,
-        email
+      await Promise.all(
+        data.items.map(item =>
+          createMovement(
+            {
+              deliveryPartnerId: String(data.partnerId),
+              productId: String(item.productId),
+              type: 'fulfillment',
+              quantity: item.quantity,
+            },
+            user.id,
+            email
+          )
+        )
       );
 
       await Promise.all([refreshProductsIfNeeded(), refreshDeliveries()]);
@@ -107,7 +109,7 @@ const DeliveryContent: React.FC<DeliveryContentProps> = ({
     }
   };
 
-  const handleMarkCompleted = async (deliveryId: number) => {
+  const handleMarkCompleted = async (deliveryId: string | number) => {
     try {
       setCompletingDeliveryId(deliveryId);
       await onUpdateDeliveryStatus(deliveryId, 'completed');
@@ -208,7 +210,7 @@ const DeliveryContent: React.FC<DeliveryContentProps> = ({
                       Delivery #{delivery.id}
                     </p>
                     <p className="text-sm text-gray-600 dark:text-gray-400">
-                      {delivery.customer_name} • {delivery.delivery_address}
+                      Type: {delivery.type} • Partner: {delivery.delivery_partner_id || 'Unassigned'}
                     </p>
                     <p className="text-xs sm:text-sm text-gray-500 dark:text-gray-500 mt-1">
                       Created {formatDateTime(delivery.created_at)}
@@ -217,32 +219,11 @@ const DeliveryContent: React.FC<DeliveryContentProps> = ({
                 </div>
                 <div className="flex items-center gap-3 sm:gap-4 w-full sm:w-auto justify-between sm:justify-end">
                   <span
-                    className={`px-3 sm:px-4 py-1.5 text-xs sm:text-sm font-semibold rounded-full ${
-                      delivery.status === 'completed'
-                        ? 'bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400'
-                        : delivery.status === 'active'
-                        ? 'bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-400'
-                        : delivery.status === 'pending'
-                        ? 'bg-yellow-100 dark:bg-yellow-900/30 text-yellow-700 dark:text-yellow-400'
-                        : 'bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-400'
-                    }`}
+                    className={`px-3 sm:px-4 py-1.5 text-xs sm:text-sm font-semibold rounded-full bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-400`}
                   >
-                    {delivery.status.charAt(0).toUpperCase() + delivery.status.slice(1)}
+                    {delivery.type.charAt(0).toUpperCase() + delivery.type.slice(1)}
                   </span>
-                  {delivery.status !== 'completed' && (
-                    <button
-                      onClick={() => handleMarkCompleted(delivery.id)}
-                      disabled={completingDeliveryId === delivery.id}
-                      className="flex items-center px-3 sm:px-4 py-1.5 sm:py-2 glass dark:glass-dark glass-hover text-indigo-600 dark:text-indigo-300 font-medium rounded-2xl shadow-lg hover:bg-white/90 dark:hover:bg-white/10 transition-all duration-300 disabled:opacity-60 disabled:cursor-not-allowed"
-                    >
-                      <CheckCircle2
-                        className={`w-4 h-4 sm:w-5 sm:h-5 mr-2 ${
-                          completingDeliveryId === delivery.id ? 'animate-spin' : ''
-                        }`}
-                      />
-                      Mark Completed
-                    </button>
-                  )}
+                  {/* Mark Completed button removed as it doesn't apply to inventory movements */}
                 </div>
               </div>
             ))

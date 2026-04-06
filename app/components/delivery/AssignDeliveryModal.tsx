@@ -5,7 +5,7 @@ import { X, Plus, Trash2 } from 'lucide-react';
 import { Product, DeliveryPartner } from '@/app/types';
 
 interface DeliveryItem {
-  productId: number;
+  productId: string | number;
   productName: string;
   sku: string;
   availableStock: number;
@@ -18,8 +18,8 @@ interface AssignDeliveryModalProps {
   products: Product[];
   partners: DeliveryPartner[];
   onAssign: (data: {
-    partnerId: number;
-    items: Array<{ productId: number; quantity: number }>;
+    partnerId: string | number;
+    items: Array<{ productId: string | number; quantity: number }>;
     customerName: string;
     customerEmail: string;
     customerPhone: string;
@@ -34,7 +34,7 @@ const AssignDeliveryModal: React.FC<AssignDeliveryModalProps> = ({
   partners,
   onAssign,
 }) => {
-  const [selectedPartner, setSelectedPartner] = useState<number | ''>('');
+  const [selectedPartner, setSelectedPartner] = useState<string | number | ''>('');
   const [deliveryItems, setDeliveryItems] = useState<DeliveryItem[]>([]);
   const [customerName, setCustomerName] = useState('');
   const [customerEmail, setCustomerEmail] = useState('');
@@ -78,8 +78,9 @@ const AssignDeliveryModal: React.FC<AssignDeliveryModalProps> = ({
     );
   };
 
-  const handleProductChange = (index: number, productId: number) => {
-    const product = products.find(p => p.id === productId);
+  const handleProductChange = (index: number, productId: string | number) => {
+    // string comparison safe
+    const product = products.find(p => String(p.id) === String(productId));
     if (!product) return;
 
     const item = deliveryItems[index];
@@ -129,7 +130,7 @@ const AssignDeliveryModal: React.FC<AssignDeliveryModalProps> = ({
 
     try {
       await onAssign({
-        partnerId: selectedPartner as number,
+        partnerId: selectedPartner,
         items: deliveryItems.map(item => ({
           productId: item.productId,
           quantity: item.quantity,
@@ -179,7 +180,7 @@ const AssignDeliveryModal: React.FC<AssignDeliveryModalProps> = ({
             <select
               id="partner"
               value={selectedPartner}
-              onChange={(e) => setSelectedPartner(e.target.value ? parseInt(e.target.value, 10) : '')}
+              onChange={(e) => setSelectedPartner(e.target.value)}
               className="glass dark:glass-dark w-full rounded-2xl shadow-sm p-3 text-gray-700 dark:text-gray-200 focus:ring-2 focus:ring-indigo-400 focus:outline-none border border-white/30 dark:border-white/10"
               required
             >
@@ -225,8 +226,8 @@ const AssignDeliveryModal: React.FC<AssignDeliveryModalProps> = ({
                     <div className="flex flex-col sm:flex-row gap-3">
                       <div className="flex-1">
                         <select
-                          value={item.productId}
-                          onChange={(e) => handleProductChange(index, parseInt(e.target.value, 10))}
+                          value={String(item.productId)}
+                          onChange={(e) => handleProductChange(index, e.target.value)}
                           className="glass dark:glass-dark w-full rounded-xl shadow-sm p-2 text-sm text-gray-700 dark:text-gray-200 focus:ring-2 focus:ring-indigo-400 focus:outline-none border border-white/30 dark:border-white/10"
                         >
                           {products

@@ -1,5 +1,5 @@
 export interface Product {
-    id: number;
+    id: string | number;
     name: string;
     sku: string;
     stock: number;
@@ -8,7 +8,7 @@ export interface Product {
   }
   
   export interface DeliveryPartner {
-    id: number;
+    id: string | number;
     name: string;
     rating: number;
     status: 'Active' | 'Pending Review';
@@ -20,6 +20,8 @@ export interface Product {
     productsInStock: number;
     activeDeliveries: number;
     newCustomers: number;
+    stockAlerts?: any[];
+    dailyAnalytics?: any[];
   }
   
   export type NavItem = {

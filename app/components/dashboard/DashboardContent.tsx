@@ -7,6 +7,7 @@ import Card from '@/app/components/ui/Card';
 import Loading from '@/app/components/ui/Loading';
 import { getAnalytics } from '@/app/lib/api/analytics';
 import { AnalyticsData } from '@/app/types';
+import { supabase } from '@/app/lib/supabase';
 
 const DashboardContent: React.FC = () => {
   const { user } = useUser();
@@ -19,10 +20,28 @@ const DashboardContent: React.FC = () => {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    const syncUserToProfiles = async () => {
+      if (!user?.id) return;
+      
+      try {
+        const { error } = await supabase
+          .from('profiles')
+          .upsert({ 
+            id: user.id, 
+            email: user.emailAddresses?.[0]?.emailAddress 
+          }, { onConflict: 'id' });
+
+        if (error) throw error;
+      } catch (error) {
+        console.error('Error syncing user to profiles:', error);
+      }
+    };
+
     const fetchAnalytics = async () => {
       if (!user?.id) return;
       
       try {
+        await syncUserToProfiles(); // Sync before fetch
         const email = user.emailAddresses?.[0]?.emailAddress;
         const data = await getAnalytics(user.id, email);
         setAnalytics(data);
@@ -81,14 +100,31 @@ const DashboardContent: React.FC = () => {
         </div>
         <div className="glass dark:glass-dark glass-hover p-4 sm:p-6 rounded-3xl shadow-lg">
           <h2 className="text-lg sm:text-xl font-semibold text-gray-800 dark:text-gray-200 mb-4">Stock Alerts</h2>
-          <ul className="space-y-2 sm:space-y-3">
-            <li className="p-3 sm:p-4 glass dark:glass-dark rounded-2xl border-l-4 border-red-400 dark:border-red-500 dark:text-gray-200">
-              <span className="font-medium text-red-700 dark:text-red-400">Low Stock:</span> USB-C Docking Station (10 units)
-            </li>
-            <li className="p-3 sm:p-4 glass dark:glass-dark rounded-2xl border-l-4 border-amber-400 dark:border-amber-500 dark:text-gray-200">
-              <span className="font-medium text-amber-700 dark:text-amber-400">Reorder Soon:</span> 4K Ultra Monitor (30 units)
-            </li>
-          </ul>
+          <div className="space-y-4">
+            {analytics.stockAlerts && analytics.stockAlerts.length > 0 ? (
+              analytics.stockAlerts.map((alert: any) => (
+                <div key={alert.product_id} className="p-4 glass dark:glass-dark rounded-2xl border-l-4 border-red-500 shadow-sm transition-all hover:translate-x-1">
+                  <div className="flex justify-between items-start">
+                    <div>
+                      <p className="text-xs font-bold text-red-500 uppercase tracking-widest mb-1 italic">Low Inventory</p>
+                      <h3 className="font-bold text-gray-900 dark:text-gray-100">{alert.product_name}</h3>
+                      <p className="text-[10px] text-gray-500 dark:text-gray-400 font-mono">{alert.product_sku}</p>
+                    </div>
+                    <div className="text-right">
+                      <span className="text-xl font-black text-red-600 dark:text-red-400">{alert.total_quantity}</span>
+                      <p className="text-[9px] font-bold text-gray-400 uppercase tracking-tighter">Units Left</p>
+                    </div>
+                  </div>
+                </div>
+              ))
+            ) : (
+              <div className="flex flex-col items-center justify-center p-8 opacity-50">
+                <Package className="w-12 h-12 text-gray-300 mb-2" />
+                <p className="text-sm font-bold text-gray-400 uppercase tracking-widest">Inventory Stable</p>
+                <p className="text-[10px] text-gray-500 text-center mt-1">All products above safety threshold</p>
+              </div>
+            )}
+          </div>
         </div>
       </div>
     </div>

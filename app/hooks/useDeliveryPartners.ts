@@ -3,7 +3,15 @@
 import { useState, useEffect } from 'react';
 import { useUser } from '@clerk/nextjs';
 import { DeliveryPartner } from '@/app/types';
-import { getDeliveryPartners, addDeliveryPartner as addDeliveryPartnerToDB } from '@/app/lib/api/delivery-partners';
+import { getDeliveryPartners, addDeliveryPartner as addDeliveryPartnerToDB, DeliveryPartnerData } from '@/app/lib/api/delivery-partners';
+
+const mapToDeliveryPartner = (data: DeliveryPartnerData): DeliveryPartner => ({
+  id: data.id,
+  name: data.company_name,
+  rating: 4.5, // Mock data
+  status: 'Active', // Mock data
+  region: 'Local Region', // Mock data
+});
 
 export const useDeliveryPartners = () => {
   const { user } = useUser();
@@ -19,7 +27,7 @@ export const useDeliveryPartners = () => {
         setLoading(true);
         const email = user.emailAddresses?.[0]?.emailAddress;
         const data = await getDeliveryPartners(user.id, email);
-        setPartners(data);
+        setPartners(data.map(mapToDeliveryPartner));
       } catch (err) {
         const errorMessage = err instanceof Error ? err.message : 'Failed to fetch delivery partners';
         setError(new Error(errorMessage));
@@ -39,7 +47,9 @@ export const useDeliveryPartners = () => {
     
     try {
       const email = user.emailAddresses?.[0]?.emailAddress;
-      const newPartner = await addDeliveryPartnerToDB(partner, user.id, email);
+      // @ts-ignore - The API now automatically resolves the store ID if omitted
+      const newPartnerData = await addDeliveryPartnerToDB({ company_name: partner.name, ...partner }, user.id, email);
+      const newPartner = mapToDeliveryPartner(newPartnerData);
       setPartners(prev => [newPartner, ...prev]);
       return newPartner;
     } catch (err) {

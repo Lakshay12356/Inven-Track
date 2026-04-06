@@ -3,50 +3,54 @@
 import { createClient } from '../supabase-client';
 
 /**
- * Get or create a user in Supabase based on Clerk user ID
- * Returns the Supabase user_id (BIGINT) for use in other tables
+ * Syncs the Clerk user identity to the Supabase 'profiles' table.
+ * Returns the Clerk User ID (UUID) for use in other tables.
  */
-export const getOrCreateUser = async (clerkUserId: string, email?: string): Promise<number> => {
+export const getOrCreateUser = async (clerkUserId: string, email?: string): Promise<string> => {
   const supabase = createClient();
   
-  // First, try to get existing user
-  const { data: existingUser, error: fetchError } = await supabase
-    .from('users')
-    .select('id')
-    .eq('clerk_user_id', clerkUserId)
-    .maybeSingle(); // Use maybeSingle() instead of single() to handle not found gracefully
-
-  // If user exists, return it
-  if (existingUser) {
-    return existingUser.id;
-  }
-
-  // If there was an error other than "not found", log it but continue to try creating
-  if (fetchError && fetchError.code !== 'PGRST116') { // PGRST116 is "not found" error
-    console.warn('Error fetching user (will try to create):', fetchError);
-  }
-
-  // If user doesn't exist, create it
-  const { data: newUser, error: insertError } = await supabase
-    .from('users')
-    .insert([{ clerk_user_id: clerkUserId, email }])
+  // Try to get or create user in one 'upsert' operation
+  const { data: profile, error: syncError } = await supabase
+    .from('profiles')
+    .upsert({ 
+      id: clerkUserId, 
+      email 
+    }, { onConflict: 'id' })
     .select('id')
     .single();
 
-  if (insertError) {
-    console.error('Error creating user:', {
-      message: insertError.message,
-      details: insertError.details,
-      hint: insertError.hint,
-      code: insertError.code
+  if (syncError) {
+    console.error('Error syncing user profile:', {
+      message: syncError.message,
+      code: syncError.code
     });
-    throw new Error(`Failed to create user: ${insertError.message || JSON.stringify(insertError)}`);
+    throw new Error(`Identity sync failed: ${syncError.message}`);
   }
 
-  if (!newUser) {
-    throw new Error('Failed to create user: No data returned');
+  if (!profile) {
+    throw new Error('Identity sync failed: No profile data returned');
   }
 
-  return newUser.id;
+  // Auto-provision a default branch and store if this is a brand new account!
+  try {
+    const { data: branches } = await supabase.from('branches').select('id').eq('user_id', profile.id).limit(1);
+    if (!branches || branches.length === 0) {
+      const { data: newBranch } = await supabase
+        .from('branches')
+        .insert({ user_id: profile.id, name: 'HQ Logistics', location: 'Headquarters' })
+        .select('id')
+        .single();
+      
+      if (newBranch) {
+        await supabase
+          .from('stores')
+          .insert({ branch_id: newBranch.id, name: 'Main Warehouse', type: 'warehouse_store' });
+      }
+    }
+  } catch (err) {
+    console.error('Failed to auto-provision default store architecture:', err);
+  }
+
+  return profile.id;
 };
 

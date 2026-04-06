@@ -4,72 +4,50 @@ import { createClient } from '../supabase-client';
 import { Product } from '@/app/types';
 import { getOrCreateUser } from './users';
 
-// Helper function to convert database row (snake_case) to Product (camelCase)
+// Helper function to convert database row to Product (camelCase)
 const mapProductFromDB = (row: any): Product => ({
   id: row.id,
   name: row.name,
   sku: row.sku,
-  stock: row.stock,
-  price: row.price,
-  lastUpdated: row.last_updated || row.lastUpdated || new Date().toISOString().split('T')[0],
+  // we can get total stock if we join stock_levels, else 0
+  stock: row.stock_levels && Array.isArray(row.stock_levels) 
+    ? row.stock_levels.reduce((sum: number, s: any) => sum + (s.quantity || 0), 0)
+    : 0,
+  price: Number(row.sale_price) || 0,
+  lastUpdated: row.updated_at || row.created_at || new Date().toISOString().split('T')[0],
 });
-
-// Helper function to convert Product (camelCase) to database row (snake_case)
-const mapProductToDB = (product: Omit<Product, 'id'> | Partial<Product>) => {
-  const dbProduct: any = {};
-  
-  if (product.name !== undefined) dbProduct.name = product.name;
-  if (product.sku !== undefined) dbProduct.sku = product.sku;
-  if (product.stock !== undefined) dbProduct.stock = product.stock;
-  if (product.price !== undefined) dbProduct.price = product.price;
-  if (product.lastUpdated !== undefined) {
-    dbProduct.last_updated = product.lastUpdated;
-  } else if (product.name !== undefined || product.sku !== undefined || product.stock !== undefined || product.price !== undefined) {
-    // Only set last_updated if we're actually updating something
-    dbProduct.last_updated = new Date().toISOString().split('T')[0];
-  }
-  
-  return dbProduct;
-};
 
 export const getProducts = async (clerkUserId: string, email?: string): Promise<Product[]> => {
   const supabase = createClient();
-  
-  // Get the Supabase user_id for this Clerk user
   const userId = await getOrCreateUser(clerkUserId, email);
   
   const { data, error } = await supabase
     .from('products')
-    .select('*')
+    .select('*, stock_levels(quantity)')
     .eq('user_id', userId)
-    .order('id', { ascending: false });
+    .order('created_at', { ascending: false });
 
   if (error) {
-    console.error('Error fetching products:', {
-      message: error.message,
-      details: error.details,
-      hint: error.hint,
-      code: error.code
-    });
-    throw new Error(`Failed to fetch products: ${error.message || JSON.stringify(error)}`);
+    console.error('Error fetching products:', error);
+    throw new Error(`Failed to fetch products: ${error.message}`);
   }
 
-  return (data || []).map(mapProductFromDB);
+  return (data || []).map(mapProductFromDB) as Product[];
 };
 
 export const addProduct = async (product: Omit<Product, 'id'>, clerkUserId: string, email?: string): Promise<Product> => {
   const supabase = createClient();
-  
-  // Get the Supabase user_id for this Clerk user
   const userId = await getOrCreateUser(clerkUserId, email);
-  
-  const dbProduct = mapProductToDB(product);
-  dbProduct.user_id = userId;
   
   const { data, error } = await supabase
     .from('products')
-    .insert([dbProduct])
-    .select()
+    .insert([{
+      user_id: userId,
+      name: product.name,
+      sku: product.sku,
+      sale_price: product.price,
+    }])
+    .select('*, stock_levels(quantity)')
     .single();
 
   if (error) {
@@ -77,23 +55,45 @@ export const addProduct = async (product: Omit<Product, 'id'>, clerkUserId: stri
     throw error;
   }
 
+  // Handle initial stock assignment to the first available store
+  if (product.stock && product.stock > 0) {
+    // Attempt to resolve a default store
+    const { data: userBranches } = await supabase.from('branches').select('id').eq('user_id', userId).limit(1).single();
+    if (userBranches?.id) {
+      const { data: userStores } = await supabase.from('stores').select('id').eq('branch_id', userBranches.id).limit(1).single();
+      if (userStores?.id) {
+        await supabase.from('stock_levels').insert({
+          product_id: data.id,
+          store_id: userStores.id,
+          quantity: product.stock,
+        });
+        
+        return {
+          ...mapProductFromDB(data),
+          stock: product.stock // reflect successfully added stock
+        };
+      }
+    }
+  }
+
   return mapProductFromDB(data);
 };
 
-export const updateProduct = async (id: number, updates: Partial<Product>, clerkUserId: string, email?: string): Promise<Product> => {
+export const updateProduct = async (id: string | number, updates: Partial<Product>, clerkUserId: string, email?: string): Promise<Product> => {
   const supabase = createClient();
-  
-  // Get the Supabase user_id for this Clerk user
   const userId = await getOrCreateUser(clerkUserId, email);
   
-  const dbUpdates = mapProductToDB(updates);
+  const dbUpdates: any = { updated_at: new Date().toISOString() };
+  if (updates.name !== undefined) dbUpdates.name = updates.name;
+  if (updates.sku !== undefined) dbUpdates.sku = updates.sku;
+  if (updates.price !== undefined) dbUpdates.sale_price = updates.price;
   
   const { data, error } = await supabase
     .from('products')
     .update(dbUpdates)
     .eq('id', id)
-    .eq('user_id', userId) // Ensure user can only update their own products
-    .select()
+    .eq('user_id', userId)
+    .select('*, stock_levels(quantity)')
     .single();
 
   if (error) {
@@ -104,21 +104,18 @@ export const updateProduct = async (id: number, updates: Partial<Product>, clerk
   return mapProductFromDB(data);
 };
 
-export const deleteProduct = async (id: number, clerkUserId: string, email?: string): Promise<void> => {
+export const deleteProduct = async (id: string | number, clerkUserId: string, email?: string): Promise<void> => {
   const supabase = createClient();
-  
-  // Get the Supabase user_id for this Clerk user
   const userId = await getOrCreateUser(clerkUserId, email);
   
   const { error } = await supabase
     .from('products')
     .delete()
     .eq('id', id)
-    .eq('user_id', userId); // Ensure user can only delete their own products
+    .eq('user_id', userId);
 
   if (error) {
     console.error('Error deleting product:', error);
     throw error;
   }
 };
-
