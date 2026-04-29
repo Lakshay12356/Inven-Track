@@ -1,6 +1,6 @@
 'use client';
 
-import { createClient } from '../supabase-client';
+import { createClient } from '@/app/lib/supabase-client';
 import { getOrCreateUser } from './users';
 
 export interface DeliveryPartnerData {
@@ -8,6 +8,9 @@ export interface DeliveryPartnerData {
   store_id: string;
   company_name: string;
   contact_info: string | null;
+  rating: number | null;
+  status: 'Active' | 'Pending Review';
+  region: string | null;
   created_at: string;
 }
 
@@ -49,44 +52,26 @@ export const getDeliveryPartners = async (clerkUserId: string, email?: string): 
 };
 
 export const addDeliveryPartner = async (
-  partner: { store_id?: string; company_name: string; contact_info?: string },
+  partner: { store_id?: string; company_name: string; contact_info?: string; rating?: number; status?: 'Active' | 'Pending Review'; region?: string; email?: string; password?: string },
   clerkUserId: string,
   email?: string
 ): Promise<DeliveryPartnerData> => {
-  const supabase = createClient();
-  const userId = await getOrCreateUser(clerkUserId, email);
+  const response = await fetch('/api/delivery-partners/create', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({
+      ...partner,
+      clerkUserId,
+      // email is passed from the component state now
+    }),
+  });
 
-  let targetStoreId = partner.store_id;
-
-  // Resolve a default store if one isn't explicitly provided
-  if (!targetStoreId) {
-    const { data: userBranches } = await supabase.from('branches').select('id').eq('user_id', userId).limit(1).single();
-    if (userBranches?.id) {
-      const { data: userStores } = await supabase.from('stores').select('id').eq('branch_id', userBranches.id).limit(1).single();
-      if (userStores?.id) {
-         targetStoreId = userStores.id;
-      }
-    }
+  if (!response.ok) {
+    const errorData = await response.json();
+    throw new Error(errorData.error || 'Failed to create delivery partner');
   }
 
-  if (!targetStoreId) {
-    throw new Error('No store available to attach the delivery partner to. Please create a store first.');
-  }
-
-  const { data, error } = await supabase
-    .from('delivery_partners')
-    .insert([{
-      store_id: targetStoreId,
-      company_name: partner.company_name,
-      contact_info: partner.contact_info || null,
-    }])
-    .select()
-    .single();
-
-  if (error) {
-    console.error('Error adding delivery partner:', error);
-    throw error;
-  }
-
-  return data;
+  return response.json();
 };

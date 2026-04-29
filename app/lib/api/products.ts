@@ -1,6 +1,6 @@
 'use client';
 
-import { createClient } from '../supabase-client';
+import { createClient } from '@/app/lib/supabase-client';
 import { Product } from '@/app/types';
 import { getOrCreateUser } from './users';
 

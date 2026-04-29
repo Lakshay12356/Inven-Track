@@ -1,6 +1,6 @@
 'use client';
 
-import { createClient } from '../supabase-client';
+import { createClient } from '@/app/lib/supabase-client';
 
 /**
  * Syncs the Clerk user identity to the Supabase 'profiles' table.
@@ -9,13 +9,25 @@ import { createClient } from '../supabase-client';
 export const getOrCreateUser = async (clerkUserId: string, email?: string): Promise<string> => {
   const supabase = createClient();
   
-  // Try to get or create user in one 'upsert' operation
+  // First check if the user already exists (e.g. created by a manager as a delivery partner)
+  const { data: existingProfile } = await supabase
+    .from('profiles')
+    .select('id')
+    .eq('id', clerkUserId)
+    .single();
+
+  if (existingProfile) {
+    return existingProfile.id;
+  }
+
+  // If not, create them as a manager (default for direct sign-ups)
   const { data: profile, error: syncError } = await supabase
     .from('profiles')
-    .upsert({ 
+    .insert({ 
       id: clerkUserId, 
-      email 
-    }, { onConflict: 'id' })
+      email,
+      role: 'manager' 
+    })
     .select('id')
     .single();
 
@@ -54,3 +66,17 @@ export const getOrCreateUser = async (clerkUserId: string, email?: string): Prom
   return profile.id;
 };
 
+export const getUserRole = async (clerkUserId: string): Promise<'manager' | 'delivery_partner'> => {
+  const supabase = createClient();
+  const { data, error } = await supabase
+    .from('profiles')
+    .select('role')
+    .eq('id', clerkUserId)
+    .single();
+
+  if (error || !data) {
+    return 'manager'; // Fallback
+  }
+
+  return data.role as 'manager' | 'delivery_partner';
+};

@@ -1,10 +1,14 @@
 'use client';
+// Force re-save to trigger Turbopack update
 
 import React from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { LayoutDashboard, Package, Truck, User, Store, X } from 'lucide-react';
 import { NavItem } from '@/app/types';
+
+import { useUser } from '@clerk/nextjs';
+import { getUserRole } from '@/app/lib/api/users';
 
 interface SidebarProps {
   isOpen?: boolean;
@@ -13,14 +17,24 @@ interface SidebarProps {
 
 const Sidebar: React.FC<SidebarProps> = ({ isOpen = false, onClose }) => {
   const pathname = usePathname();
+  const { user } = useUser();
+  const [role, setRole] = React.useState<'manager' | 'delivery_partner' | null>(null);
+
+  React.useEffect(() => {
+    if (user?.id) {
+      getUserRole(user.id).then(setRole);
+    }
+  }, [user?.id]);
   
-  const navItems: NavItem[] = [
+  const allNavItems: NavItem[] = [
     { name: 'Dashboard', icon: LayoutDashboard, path: '/dashboard' },
-    { name: 'Inventory', icon: Package, path: '/inventory' },
-    { name: 'Delivery', icon: Truck, path: '/delivery' },
+    { name: 'Inventory', icon: Package, path: '/inventory', role: 'manager' },
+    { name: 'Delivery', icon: Truck, path: '/delivery', role: 'manager' },
+    { name: 'Branches', icon: Store, path: '/branches', role: 'manager' },
     { name: 'Profile', icon: User, path: '/profile' },
-    { name: 'Branches', icon: Store, path: '/branches', comingSoon: true },
   ];
+
+  const navItems = allNavItems.filter(item => !item.role || item.role === role);
 
   const isActive = (path: string) => {
     if (path === '/dashboard') {
@@ -59,26 +73,14 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen = false, onClose }) => {
                 className={`flex items-center w-full p-4 rounded-2xl text-left transition-all duration-300 mb-2
                   ${active
                     ? 'glass dark:glass-dark bg-white/50 dark:bg-white/10 text-gray-800 dark:text-gray-200 shadow-lg scale-105'
-                    : item.comingSoon
-                      ? 'text-gray-500 dark:text-gray-400 cursor-not-allowed hover:bg-white/30 dark:hover:bg-white/5'
-                      : 'text-gray-700 dark:text-gray-300 hover:bg-white/40 dark:hover:bg-white/10 hover:text-gray-900 dark:hover:text-gray-100 hover:scale-105'
+                    : 'text-gray-700 dark:text-gray-300 hover:bg-white/40 dark:hover:bg-white/10 hover:text-gray-900 dark:hover:text-gray-100 hover:scale-105'
                   }
                 `}
-                title={item.comingSoon ? "Coming Soon" : item.name}
               >
                 <item.icon className="w-5 h-5 mr-3" />
                 {item.name}
-                {item.comingSoon && <span className="ml-auto text-xs glass dark:glass-dark px-2 py-1 rounded-full text-gray-600 dark:text-gray-400">Soon</span>}
               </div>
             );
-
-            if (item.comingSoon) {
-              return (
-                <div key={item.name} onClick={onClose}>
-                  {content}
-                </div>
-              );
-            }
 
             return (
               <Link

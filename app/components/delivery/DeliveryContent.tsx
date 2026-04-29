@@ -1,24 +1,24 @@
 'use client';
 
 import React, { useCallback, useState } from 'react';
-import { Truck, Plus, Package, CheckCircle2, RefreshCw } from 'lucide-react';
+import { Truck, Plus, Package, CheckCircle2, RefreshCw, MapPin, Phone, User, Clock } from 'lucide-react';
 import { useUser } from '@clerk/nextjs';
 import { Product, DeliveryPartner } from '@/app/types';
 import AddDeliveryPartnerModal from './AddDeliveryPartnerModal';
 import AssignDeliveryModal from './AssignDeliveryModal';
-import { createMovement } from '@/app/lib/api/deliveries';
-import type { InventoryMovement as Delivery } from '@/app/lib/api/deliveries';
+import { DeliveryOrder } from '@/app/lib/api/deliveries';
 
 interface DeliveryContentProps {
   products: Product[];
   partners: DeliveryPartner[];
-  deliveries: Delivery[];
+  deliveries: DeliveryOrder[];
   deliveriesLoading: boolean;
   deliveriesError: Error | null;
-  addPartner: (partner: Omit<DeliveryPartner, 'id'>) => Promise<DeliveryPartner>;
+  addPartner: (partner: Omit<DeliveryPartner, 'id'> & { email?: string; password?: string }) => Promise<DeliveryPartner>;
+  createOrder: (data: any) => Promise<DeliveryOrder>;
   refreshProducts?: () => Promise<void> | void;
   refreshDeliveries: () => Promise<void>;
-  onUpdateDeliveryStatus: (deliveryId: string | number, status: string) => Promise<void>;
+  onUpdateDeliveryStatus: (deliveryId: string | number, status: string) => Promise<any>;
 }
 
 const DeliveryContent: React.FC<DeliveryContentProps> = ({
@@ -28,6 +28,7 @@ const DeliveryContent: React.FC<DeliveryContentProps> = ({
   deliveriesLoading,
   deliveriesError,
   addPartner,
+  createOrder,
   refreshProducts,
   refreshDeliveries,
   onUpdateDeliveryStatus,
@@ -37,7 +38,7 @@ const DeliveryContent: React.FC<DeliveryContentProps> = ({
   const [isPartnerModalOpen, setIsPartnerModalOpen] = useState(false);
   const [isAssignModalOpen, setIsAssignModalOpen] = useState(false);
   const [isRefreshingDeliveries, setIsRefreshingDeliveries] = useState(false);
-  const [completingDeliveryId, setCompletingDeliveryId] = useState<string | number | null>(null);
+  const [updatingOrderId, setUpdatingOrderId] = useState<string | number | null>(null);
 
   const clearMessageAfterDelay = useCallback(() => {
     setTimeout(() => setAssignmentMessage(''), 5000);
@@ -61,67 +62,45 @@ const DeliveryContent: React.FC<DeliveryContentProps> = ({
       throw new Error('User not authenticated');
     }
 
-    const email = user.emailAddresses?.[0]?.emailAddress;
-
     try {
-      await Promise.all(
-        data.items.map(item =>
-          createMovement(
-            {
-              deliveryPartnerId: String(data.partnerId),
-              productId: String(item.productId),
-              type: 'fulfillment',
-              quantity: item.quantity,
-            },
-            user.id,
-            email
-          )
-        )
-      );
+      await createOrder({
+        partnerId: String(data.partnerId),
+        customerName: data.customerName,
+        customerAddress: data.deliveryAddress,
+        customerPhone: data.customerPhone,
+        items: data.items,
+      });
 
       await Promise.all([refreshProductsIfNeeded(), refreshDeliveries()]);
 
       const itemCount = data.items.length;
-      const partnerName = partners.find(p => p.id === data.partnerId)?.name || 'Partner';
+      const partnerName = partners.find(p => String(p.id) === String(data.partnerId))?.name || 'Partner';
       setAssignmentMessage(
-        `Successfully assigned ${itemCount} product${itemCount > 1 ? 's' : ''} to ${partnerName} for delivery to ${data.customerName}.`
+        `Successfully created delivery order for ${data.customerName} and assigned to ${partnerName}.`
       );
       clearMessageAfterDelay();
     } catch (err) {
-      const errorMessage = err instanceof Error ? err.message : 'Failed to assign delivery';
-      const message = `Failed to assign delivery: ${errorMessage}`;
+      const errorMessage = err instanceof Error ? err.message : 'Failed to create delivery order';
+      const message = `Error: ${errorMessage}`;
       setAssignmentMessage(message);
       clearMessageAfterDelay();
       throw err instanceof Error ? err : new Error(message);
     }
   };
 
-  const handleRefreshDeliveries = async () => {
+  const handleStatusUpdate = async (orderId: string | number, status: string) => {
     try {
-      setIsRefreshingDeliveries(true);
+      setUpdatingOrderId(orderId);
+      await onUpdateDeliveryStatus(orderId, status);
       await refreshDeliveries();
-    } catch (err) {
-      const errorMessage = err instanceof Error ? err.message : 'Failed to refresh deliveries';
-      setAssignmentMessage(`Failed to refresh deliveries: ${errorMessage}`);
-      clearMessageAfterDelay();
-    } finally {
-      setIsRefreshingDeliveries(false);
-    }
-  };
-
-  const handleMarkCompleted = async (deliveryId: string | number) => {
-    try {
-      setCompletingDeliveryId(deliveryId);
-      await onUpdateDeliveryStatus(deliveryId, 'completed');
-      await refreshDeliveries();
-      setAssignmentMessage(`Successfully marked delivery #${deliveryId} as completed.`);
+      setAssignmentMessage(`Successfully updated order #${orderId} status to ${status}.`);
       clearMessageAfterDelay();
     } catch (err) {
-      const errorMessage = err instanceof Error ? err.message : 'Failed to mark delivery as completed';
-      setAssignmentMessage(`Failed to mark delivery as completed: ${errorMessage}`);
+      const errorMessage = err instanceof Error ? err.message : 'Failed to update status';
+      setAssignmentMessage(`Error: ${errorMessage}`);
       clearMessageAfterDelay();
     } finally {
-      setCompletingDeliveryId(null);
+      setUpdatingOrderId(null);
     }
   };
 
@@ -134,9 +113,21 @@ const DeliveryContent: React.FC<DeliveryContentProps> = ({
     });
   };
 
+  const getStatusColor = (status: string) => {
+    switch (status) {
+      case 'completed': return 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400';
+      case 'in_transit': return 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400';
+      case 'assigned': return 'bg-indigo-100 text-indigo-700 dark:bg-indigo-900/30 dark:text-indigo-400';
+      case 'cancelled': return 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400';
+      default: return 'bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-400';
+    }
+  };
+
   return (
     <div className="p-4 sm:p-6 lg:p-8 space-y-6 sm:space-y-8">
-      <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold text-gray-800 dark:text-gray-100">Delivery Management</h1>
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+        <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold text-gray-800 dark:text-gray-100">Delivery Management</h1>
+      </div>
 
       {/* Assignment Panel */}
       <div className="glass dark:glass-dark p-4 sm:p-6 rounded-3xl shadow-lg border-l-4 border-indigo-500 dark:border-indigo-400">
@@ -170,12 +161,16 @@ const DeliveryContent: React.FC<DeliveryContentProps> = ({
           <div className="flex items-center gap-3">
             <Package className="w-5 h-5 sm:w-6 sm:h-6 text-indigo-500 dark:text-indigo-400" />
             <div>
-              <h2 className="text-xl sm:text-2xl font-semibold text-gray-800 dark:text-gray-200">Deliveries</h2>
-              <p className="text-sm text-gray-500 dark:text-gray-400">Track status and complete deliveries</p>
+              <h2 className="text-xl sm:text-2xl font-semibold text-gray-800 dark:text-gray-200">Delivery Orders</h2>
+              <p className="text-sm text-gray-500 dark:text-gray-400">Track multi-item shipments and partner status</p>
             </div>
           </div>
           <button
-            onClick={handleRefreshDeliveries}
+            onClick={async () => {
+                setIsRefreshingDeliveries(true);
+                await refreshDeliveries();
+                setIsRefreshingDeliveries(false);
+            }}
             disabled={isRefreshingDeliveries}
             className="flex items-center px-4 sm:px-5 py-2 sm:py-2.5 glass dark:glass-dark glass-hover text-gray-700 dark:text-gray-200 font-medium rounded-2xl shadow-lg hover:bg-white/90 dark:hover:bg-white/10 transition-all duration-300 disabled:opacity-60 disabled:cursor-not-allowed"
           >
@@ -183,47 +178,99 @@ const DeliveryContent: React.FC<DeliveryContentProps> = ({
             Refresh
           </button>
         </div>
-        <div className="p-4 sm:p-6 space-y-3 sm:space-y-4">
+        <div className="p-4 sm:p-6 space-y-4">
           {deliveriesError && (
             <div className="p-4 glass dark:glass-dark rounded-2xl border border-red-200 dark:border-red-800 text-red-700 dark:text-red-400 text-sm">
               {deliveriesError.message}
             </div>
           )}
           {deliveriesLoading ? (
-            <div className="p-6 text-center text-gray-500 dark:text-gray-400 text-sm sm:text-base">
+            <div className="p-6 text-center text-gray-500 dark:text-gray-400">
               Loading deliveries...
             </div>
           ) : deliveries.length === 0 ? (
-            <div className="p-6 text-center text-gray-500 dark:text-gray-400 text-sm sm:text-base">
-              No deliveries have been scheduled yet. Create a new delivery to get started.
+            <div className="p-6 text-center text-gray-500 dark:text-gray-400">
+              No delivery orders have been created yet.
             </div>
           ) : (
-            deliveries.map(delivery => (
+            deliveries.map(order => (
               <div
-                key={delivery.id}
-                className="glass dark:glass-dark p-4 sm:p-5 rounded-2xl border border-white/20 dark:border-white/10 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 hover:bg-white/60 dark:hover:bg-white/10 transition-all duration-300"
+                key={order.id}
+                className="glass dark:glass-dark p-6 rounded-2xl border border-white/20 dark:border-white/10 space-y-4 hover:bg-white/40 dark:hover:bg-white/5 transition-all duration-300"
               >
-                <div className="flex items-start gap-3 w-full sm:w-auto">
-                  <Truck className="w-5 h-5 sm:w-6 sm:h-6 text-indigo-500 dark:text-indigo-400 mt-1" />
-                  <div>
-                    <p className="text-base sm:text-lg font-semibold text-gray-900 dark:text-gray-100">
-                      Delivery #{delivery.id}
-                    </p>
-                    <p className="text-sm text-gray-600 dark:text-gray-400">
-                      Type: {delivery.type} • Partner: {delivery.delivery_partner_id || 'Unassigned'}
-                    </p>
-                    <p className="text-xs sm:text-sm text-gray-500 dark:text-gray-500 mt-1">
-                      Created {formatDateTime(delivery.created_at)}
-                    </p>
+                <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
+                  <div className="flex items-start gap-4">
+                    <div className="p-3 bg-indigo-100 dark:bg-indigo-900/30 rounded-xl">
+                      <Truck className="w-6 h-6 text-indigo-600 dark:text-indigo-400" />
+                    </div>
+                    <div>
+                      <h3 className="text-lg font-bold text-gray-900 dark:text-gray-100 flex items-center gap-2">
+                        Order #{order.id}
+                        <span className={`px-3 py-1 text-xs rounded-full ${getStatusColor(order.status)}`}>
+                          {order.status.replace('_', ' ').toUpperCase()}
+                        </span>
+                      </h3>
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-1 mt-2 text-sm text-gray-600 dark:text-gray-400">
+                        <div className="flex items-center gap-2">
+                          <User className="w-4 h-4" />
+                          {order.customer_name}
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <MapPin className="w-4 h-4" />
+                          {order.customer_address}
+                        </div>
+                        {order.customer_phone && (
+                          <div className="flex items-center gap-2">
+                            <Phone className="w-4 h-4" />
+                            {order.customer_phone}
+                          </div>
+                        )}
+                        <div className="flex items-center gap-2">
+                          <Clock className="w-4 h-4" />
+                          {formatDateTime(order.created_at)}
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="flex flex-wrap items-center gap-3">
+                    {order.status === 'assigned' && (
+                      <button
+                        onClick={() => handleStatusUpdate(order.id, 'in_transit')}
+                        disabled={updatingOrderId === order.id}
+                        className="px-4 py-2 bg-blue-600 text-white text-sm font-medium rounded-xl shadow-md hover:bg-blue-700 transition-all disabled:opacity-50"
+                      >
+                        Mark In Transit
+                      </button>
+                    )}
+                    {order.status === 'in_transit' && (
+                      <button
+                        onClick={() => handleStatusUpdate(order.id, 'completed')}
+                        disabled={updatingOrderId === order.id}
+                        className="px-4 py-2 bg-green-600 text-white text-sm font-medium rounded-xl shadow-md hover:bg-green-700 transition-all disabled:opacity-50"
+                      >
+                        Mark Completed
+                      </button>
+                    )}
                   </div>
                 </div>
-                <div className="flex items-center gap-3 sm:gap-4 w-full sm:w-auto justify-between sm:justify-end">
-                  <span
-                    className={`px-3 sm:px-4 py-1.5 text-xs sm:text-sm font-semibold rounded-full bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-400`}
-                  >
-                    {delivery.type.charAt(0).toUpperCase() + delivery.type.slice(1)}
-                  </span>
-                  {/* Mark Completed button removed as it doesn't apply to inventory movements */}
+
+                {/* Order Items */}
+                <div className="bg-white/30 dark:bg-black/20 rounded-xl p-4">
+                  <h4 className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-2">Order Items</h4>
+                  <div className="space-y-2">
+                    {order.items?.map(item => {
+                        const product = products.find(p => String(p.id) === String(item.product_id));
+                        return (
+                          <div key={item.id} className="flex justify-between text-sm">
+                            <span className="text-gray-700 dark:text-gray-300">
+                                {product?.name || `Product #${item.product_id}`}
+                            </span>
+                            <span className="font-medium text-gray-900 dark:text-gray-100">x{item.quantity}</span>
+                          </div>
+                        );
+                    })}
+                  </div>
                 </div>
               </div>
             ))

@@ -16,6 +16,7 @@ export default function DeliveryPage() {
     error: deliveriesError,
     refreshDeliveries,
     setDeliveryStatus,
+    createOrder,
   } = useDeliveries();
 
   return (
@@ -24,6 +25,7 @@ export default function DeliveryPage() {
         products={products} 
         partners={partners} 
         addPartner={addPartner}
+        createOrder={createOrder}
         refreshProducts={refreshProducts}
         deliveries={deliveries}
         deliveriesLoading={deliveriesLoading}

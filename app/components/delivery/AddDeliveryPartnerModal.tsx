@@ -1,4 +1,5 @@
 'use client';
+// Force re-save to trigger Turbopack update
 
 import React, { useState } from 'react';
 import { X } from 'lucide-react';
@@ -7,12 +8,14 @@ import { DeliveryPartner } from '@/app/types';
 interface AddDeliveryPartnerModalProps {
   isOpen: boolean;
   onClose: () => void;
-  onAddPartner: (partner: Omit<DeliveryPartner, 'id'>) => Promise<DeliveryPartner>;
+  onAddPartner: (partner: Omit<DeliveryPartner, 'id'> & { email?: string; password?: string }) => Promise<DeliveryPartner>;
 }
 
 const AddDeliveryPartnerModal: React.FC<AddDeliveryPartnerModalProps> = ({ isOpen, onClose, onAddPartner }) => {
   const [newPartner, setNewPartner] = useState({ 
     name: '', 
+    email: '',
+    password: '',
     rating: '', 
     status: 'Active' as 'Active' | 'Pending Review', 
     region: '' 
@@ -23,21 +26,23 @@ const AddDeliveryPartnerModal: React.FC<AddDeliveryPartnerModalProps> = ({ isOpe
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (!newPartner.name || !newPartner.rating || !newPartner.region) return;
+    if (!newPartner.name || !newPartner.rating || !newPartner.region || !newPartner.email || !newPartner.password) return;
 
     setLoading(true);
     setError(null);
 
     try {
-      const partner: Omit<DeliveryPartner, 'id'> = {
+      const partner = {
         name: newPartner.name,
+        email: newPartner.email,
+        password: newPartner.password,
         rating: parseFloat(newPartner.rating),
         status: newPartner.status,
         region: newPartner.region,
       };
 
       await onAddPartner(partner);
-      setNewPartner({ name: '', rating: '', status: 'Active', region: '' });
+      setNewPartner({ name: '', email: '', password: '', rating: '', status: 'Active', region: '' });
       onClose();
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to add delivery partner');
@@ -74,6 +79,32 @@ const AddDeliveryPartnerModal: React.FC<AddDeliveryPartnerModalProps> = ({ isOpe
               className="glass dark:glass-dark w-full rounded-2xl shadow-sm p-3 text-gray-700 dark:text-gray-200 focus:ring-2 focus:ring-indigo-400 focus:outline-none border border-white/30 dark:border-white/10"
               required
             />
+          </div>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div>
+              <label htmlFor="email" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Email Address</label>
+              <input
+                type="email"
+                name="email"
+                id="email"
+                value={newPartner.email}
+                onChange={handleInputChange}
+                className="glass dark:glass-dark w-full rounded-2xl shadow-sm p-3 text-gray-700 dark:text-gray-200 focus:ring-2 focus:ring-indigo-400 focus:outline-none border border-white/30 dark:border-white/10"
+                required
+              />
+            </div>
+            <div>
+              <label htmlFor="password" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Temporary Password</label>
+              <input
+                type="password"
+                name="password"
+                id="password"
+                value={newPartner.password}
+                onChange={handleInputChange}
+                className="glass dark:glass-dark w-full rounded-2xl shadow-sm p-3 text-gray-700 dark:text-gray-200 focus:ring-2 focus:ring-indigo-400 focus:outline-none border border-white/30 dark:border-white/10"
+                required
+              />
+            </div>
           </div>
           <div className="grid grid-cols-2 gap-4">
             <div>

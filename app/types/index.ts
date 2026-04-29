@@ -29,6 +29,7 @@ export interface Product {
     icon: React.ComponentType<any>;
     path: string;
     comingSoon?: boolean;
+    role?: 'manager' | 'delivery_partner';
   };
   
   export interface NewProductForm {

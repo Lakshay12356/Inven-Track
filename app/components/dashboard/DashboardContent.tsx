@@ -7,10 +7,14 @@ import Card from '@/app/components/ui/Card';
 import Loading from '@/app/components/ui/Loading';
 import { getAnalytics } from '@/app/lib/api/analytics';
 import { AnalyticsData } from '@/app/types';
-import { supabase } from '@/app/lib/supabase';
+import { createClient } from '@/app/lib/supabase-client';
+import { getUserRole } from '@/app/lib/api/users';
+import DeliveryPartnerDashboard from './DeliveryPartnerDashboard';
 
 const DashboardContent: React.FC = () => {
+  const supabase = createClient();
   const { user } = useUser();
+  const [role, setRole] = useState<'manager' | 'delivery_partner' | null>(null);
   const [analytics, setAnalytics] = useState<AnalyticsData>({
     totalRevenue: 0,
     productsInStock: 0,
@@ -20,43 +24,35 @@ const DashboardContent: React.FC = () => {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const syncUserToProfiles = async () => {
+    const syncUserAndFetchRole = async () => {
       if (!user?.id) return;
       
       try {
-        const { error } = await supabase
-          .from('profiles')
-          .upsert({ 
-            id: user.id, 
-            email: user.emailAddresses?.[0]?.emailAddress 
-          }, { onConflict: 'id' });
+        setLoading(true);
+        const userRole = await getUserRole(user.id);
+        setRole(userRole);
 
-        if (error) throw error;
+        if (userRole === 'manager') {
+          const email = user.emailAddresses?.[0]?.emailAddress;
+          const data = await getAnalytics(user.id, email);
+          setAnalytics(data);
+        }
       } catch (error) {
-        console.error('Error syncing user to profiles:', error);
-      }
-    };
-
-    const fetchAnalytics = async () => {
-      if (!user?.id) return;
-      
-      try {
-        await syncUserToProfiles(); // Sync before fetch
-        const email = user.emailAddresses?.[0]?.emailAddress;
-        const data = await getAnalytics(user.id, email);
-        setAnalytics(data);
-      } catch (error) {
-        console.error('Error fetching analytics:', error);
+        console.error('Error in dashboard setup:', error);
       } finally {
         setLoading(false);
       }
     };
 
-    fetchAnalytics();
+    syncUserAndFetchRole();
   }, [user?.id, user?.emailAddresses]);
 
   if (loading) {
     return <Loading size="md" text="Loading dashboard..." />;
+  }
+
+  if (role === 'delivery_partner') {
+    return <DeliveryPartnerDashboard />;
   }
 
   return (

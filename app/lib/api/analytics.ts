@@ -1,7 +1,8 @@
 import { AnalyticsData } from '@/app/types';
-import { supabase } from '@/app/lib/supabase';
+import { createClient } from '@/app/lib/supabase-client';
 
 export const getAnalytics = async (clerkUserId: string, email?: string): Promise<AnalyticsData> => {
+  const supabase = createClient();
   // 1. Total Revenue & Gross Profit from the daily_analytics view
   const { data: analyticsData } = await supabase
     .from('tenant_daily_analytics')

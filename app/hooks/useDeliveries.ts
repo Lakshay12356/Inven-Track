@@ -1,59 +1,74 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import { useUser } from '@clerk/nextjs';
-import { getMovements, InventoryMovement } from '@/app/lib/api/deliveries';
+import { 
+  getDeliveryOrders, 
+  createDeliveryOrder as apiCreateOrder, 
+  updateOrderStatus as apiUpdateStatus,
+  DeliveryOrder, 
+  CreateOrderData 
+} from '@/app/lib/api/deliveries';
 
 export const useDeliveries = () => {
   const { user } = useUser();
-  const [deliveries, setDeliveries] = useState<InventoryMovement[]>([]);
+  const [deliveries, setDeliveries] = useState<DeliveryOrder[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<Error | null>(null);
 
-  useEffect(() => {
-    const fetchMovements = async () => {
-      if (!user?.id) return;
-
-      try {
-        setLoading(true);
-        const email = user.emailAddresses?.[0]?.emailAddress;
-        const data = await getMovements(user.id, email);
-        setDeliveries(data);
-      } catch (err) {
-        const errorMessage = err instanceof Error ? err.message : 'Failed to fetch movements';
-        setError(new Error(errorMessage));
-        console.error('Error fetching movements:', err);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchMovements();
-  }, [user?.id, user?.emailAddresses]);
-
-  const refreshDeliveries = async () => {
+  const fetchOrders = useCallback(async () => {
     if (!user?.id) return;
 
     try {
+      setLoading(true);
       const email = user.emailAddresses?.[0]?.emailAddress;
-      const data = await getMovements(user.id, email);
+      const data = await getDeliveryOrders(user.id, email);
       setDeliveries(data);
     } catch (err) {
-      const errorMessage = err instanceof Error ? err.message : 'Failed to refresh movements';
+      const errorMessage = err instanceof Error ? err.message : 'Failed to fetch delivery orders';
       setError(new Error(errorMessage));
-      console.error('Error refreshing movements:', err);
+      console.error('Error fetching delivery orders:', err);
+    } finally {
+      setLoading(false);
+    }
+  }, [user?.id, user?.emailAddresses]);
+
+  useEffect(() => {
+    fetchOrders();
+  }, [fetchOrders]);
+
+  const createOrder = async (data: Omit<CreateOrderData, 'managerId'>) => {
+    if (!user?.id) throw new Error('User not authenticated');
+    
+    try {
+      const newOrder = await apiCreateOrder({ ...data, managerId: user.id });
+      setDeliveries(prev => [newOrder, ...prev]);
+      return newOrder;
+    } catch (err) {
+      console.error('Error creating delivery order:', err);
+      throw err;
     }
   };
 
-  const setDeliveryStatus = async (_movementId: string | number, _status: string) => {
-    console.warn('Movement status updates not yet implemented in new schema');
+  const setDeliveryStatus = async (orderId: string | number, status: string) => {
+    if (!user?.id) throw new Error('User not authenticated');
+
+    try {
+      const updatedOrder = await apiUpdateStatus(String(orderId), status as any, user.id);
+      setDeliveries(prev => prev.map(o => o.id === updatedOrder.id ? updatedOrder : o));
+      return updatedOrder;
+    } catch (err) {
+      console.error('Error updating delivery order status:', err);
+      throw err;
+    }
   };
 
   return {
     deliveries,
     loading,
     error,
-    refreshDeliveries,
+    refreshDeliveries: fetchOrders,
+    createOrder,
     setDeliveryStatus,
   };
 };

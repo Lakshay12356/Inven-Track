@@ -8,9 +8,9 @@ import { getDeliveryPartners, addDeliveryPartner as addDeliveryPartnerToDB, Deli
 const mapToDeliveryPartner = (data: DeliveryPartnerData): DeliveryPartner => ({
   id: data.id,
   name: data.company_name,
-  rating: 4.5, // Mock data
-  status: 'Active', // Mock data
-  region: 'Local Region', // Mock data
+  rating: data.rating || 4.5,
+  status: data.status || 'Active',
+  region: data.region || 'Local Region',
 });
 
 export const useDeliveryPartners = () => {
@@ -40,15 +40,18 @@ export const useDeliveryPartners = () => {
     fetchPartners();
   }, [user?.id, user?.emailAddresses]);
 
-  const addPartner = async (partner: Omit<DeliveryPartner, 'id'>) => {
+  const addPartner = async (partner: Omit<DeliveryPartner, 'id'> & { email?: string; password?: string }) => {
     if (!user?.id) {
       throw new Error('User not authenticated');
     }
     
     try {
-      const email = user.emailAddresses?.[0]?.emailAddress;
-      // @ts-ignore - The API now automatically resolves the store ID if omitted
-      const newPartnerData = await addDeliveryPartnerToDB({ company_name: partner.name, ...partner }, user.id, email);
+      const userEmail = user.emailAddresses?.[0]?.emailAddress;
+      const newPartnerData = await addDeliveryPartnerToDB(
+        { company_name: partner.name, ...partner }, 
+        user.id, 
+        userEmail
+      );
       const newPartner = mapToDeliveryPartner(newPartnerData);
       setPartners(prev => [newPartner, ...prev]);
       return newPartner;

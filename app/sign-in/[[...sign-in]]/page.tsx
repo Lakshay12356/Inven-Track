@@ -3,7 +3,7 @@ import { Package } from "lucide-react";
 
 export default function SignInPage() {
   return (
-    <div className="flex min-h-screen items-center justify-center bg-[#020617] px-4 py-12 sm:px-6 lg:px-8 relative overflow-hidden font-sans">
+    <div className="flex h-screen items-center justify-center bg-[#020617] px-4 overflow-hidden relative font-sans">
       {/* Dynamic Background Blobs */}
       <div className="absolute top-[-10%] left-[-10%] w-[40%] h-[40%] bg-blue-600/20 rounded-full blur-[120px] animate-blob"></div>
       <div className="absolute bottom-[-10%] right-[-10%] w-[40%] h-[40%] bg-cyan-600/20 rounded-full blur-[120px] animate-blob animation-delay-2000"></div>
@@ -19,8 +19,8 @@ export default function SignInPage() {
         </svg>
       </div>
 
-      <div className="w-full max-w-md relative z-10">
-        <div className="flex flex-col items-center mb-10">
+      <div className="w-full max-w-md relative z-10 scale-90 sm:scale-100">
+        <div className="flex flex-col items-center mb-6">
           <div className="p-4 bg-white/5 backdrop-blur-3xl rounded-3xl border border-white/10 mb-6 group transition-all duration-500 hover:scale-110 hover:shadow-2xl hover:shadow-blue-500/20">
             <Package className="w-12 h-12 text-[#00BFFF] drop-shadow-[0_0_15px_rgba(0,191,255,0.4)]" />
           </div>
@@ -65,7 +65,7 @@ export default function SignInPage() {
           />
         </div>
         
-        <div className="mt-12 text-center flex flex-col items-center gap-4">
+        <div className="mt-8 text-center flex flex-col items-center gap-3">
           <div className="flex items-center gap-4 opacity-20">
             <span className="h-[1px] w-12 bg-gradient-to-r from-transparent to-white"></span>
             <p className="text-[10px] font-bold text-white uppercase tracking-[0.5em]">Inventory OS v2.0</p>
