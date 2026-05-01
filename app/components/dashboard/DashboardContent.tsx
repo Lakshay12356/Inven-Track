@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { useUser } from '@clerk/nextjs';
-import { DollarSign, Package, Truck, Users, BarChart3 } from 'lucide-react';
+import { DollarSign, Package, Truck, Users, BarChart3, TrendingUp } from 'lucide-react';
 import Card from '@/app/components/ui/Card';
 import Loading from '@/app/components/ui/Loading';
 import { getAnalytics } from '@/app/lib/api/analytics';
@@ -57,67 +57,99 @@ const DashboardContent: React.FC = () => {
 
   return (
     <div className="p-4 sm:p-6 lg:p-8 space-y-6 sm:space-y-8">
-      <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold text-gray-800 dark:text-gray-100">Main Dashboard</h1>
-
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
-        <Card
-          title="Total Revenue (YTD)"
-          value={`$${analytics.totalRevenue.toLocaleString()}`}
-          icon={DollarSign}
-          colorClass="text-green-500"
-        />
-        <Card
-          title="Products In Stock"
-          value={analytics.productsInStock.toLocaleString()}
-          icon={Package}
-          colorClass="text-blue-500"
-        />
-        <Card
-          title="Active Deliveries"
-          value={analytics.activeDeliveries.toLocaleString()}
-          icon={Truck}
-          colorClass="text-amber-500"
-        />
-        <Card
-          title="New Customers (Q3)"
-          value={analytics.newCustomers.toLocaleString()}
-          icon={Users}
-          colorClass="text-pink-500"
-        />
+      {/* Welcome section */}
+      <div className="animate-fade-in-up">
+        <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold text-gray-800 dark:text-white">
+          Main Dashboard
+        </h1>
+        <p className="text-gray-500 dark:text-white/35 mt-1 text-sm">
+          Welcome back! Here&apos;s what&apos;s happening with your inventory.
+        </p>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 sm:gap-6">
-        <div className="lg:col-span-2 glass dark:glass-dark glass-hover p-4 sm:p-6 rounded-3xl shadow-lg">
-          <h2 className="text-lg sm:text-xl font-semibold text-gray-800 dark:text-gray-200 mb-4">Inventory Value Trend</h2>
-          <div className="h-48 sm:h-64 flex items-center justify-center glass dark:glass-dark rounded-2xl border border-white/30 dark:border-white/10">
-            <BarChart3 className="w-8 h-8 sm:w-10 sm:h-10 text-blue-300 dark:text-blue-400 mr-2" />
-            <p className="text-sm sm:text-base text-gray-500 dark:text-gray-400">Analytics Chart Placeholder</p>
+      {/* Stats cards */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-5">
+        <div className="animate-fade-in-up" style={{ animationDelay: '0.05s' }}>
+          <Card
+            title="Total Revenue (YTD)"
+            value={`$${analytics.totalRevenue.toLocaleString()}`}
+            icon={DollarSign}
+            colorClass="text-green-500"
+          />
+        </div>
+        <div className="animate-fade-in-up" style={{ animationDelay: '0.1s' }}>
+          <Card
+            title="Products In Stock"
+            value={analytics.productsInStock.toLocaleString()}
+            icon={Package}
+            colorClass="text-blue-500"
+          />
+        </div>
+        <div className="animate-fade-in-up" style={{ animationDelay: '0.15s' }}>
+          <Card
+            title="Active Deliveries"
+            value={analytics.activeDeliveries.toLocaleString()}
+            icon={Truck}
+            colorClass="text-amber-500"
+          />
+        </div>
+        <div className="animate-fade-in-up" style={{ animationDelay: '0.2s' }}>
+          <Card
+            title="New Customers (Q3)"
+            value={analytics.newCustomers.toLocaleString()}
+            icon={Users}
+            colorClass="text-pink-500"
+          />
+        </div>
+      </div>
+
+      {/* Charts & Alerts row */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 sm:gap-5">
+        {/* Chart panel */}
+        <div className="lg:col-span-2 bg-white/45 dark:bg-white/[0.04] backdrop-blur-2xl dark:backdrop-blur-3xl border border-white/50 dark:border-white/[0.07] dark:border-t-white/[0.12] rounded-2xl p-5 sm:p-6 shadow-[0_4px_24px_rgba(0,0,0,0.04)] dark:shadow-[0_8px_32px_rgba(0,0,0,0.4),inset_0_1px_0_rgba(255,255,255,0.05)] animate-fade-in-up" style={{ animationDelay: '0.25s' }}>
+          <div className="flex items-center justify-between mb-5">
+            <h2 className="text-base sm:text-lg font-semibold text-gray-800 dark:text-white/90">Inventory Value Trend</h2>
+            <div className="flex items-center gap-1.5 text-xs font-medium text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-500/10 px-2.5 py-1 rounded-lg border border-transparent dark:border-emerald-500/20">
+              <TrendingUp className="w-3.5 h-3.5" />
+              +14.2%
+            </div>
+          </div>
+          <div className="h-48 sm:h-64 flex items-center justify-center bg-white/30 dark:bg-white/[0.02] rounded-xl border border-white/30 dark:border-white/[0.04]">
+            <div className="text-center">
+              <BarChart3 className="w-10 h-10 text-blue-300/60 dark:text-blue-400/20 mx-auto mb-2" />
+              <p className="text-sm text-gray-400 dark:text-white/20">Analytics Chart Placeholder</p>
+            </div>
           </div>
         </div>
-        <div className="glass dark:glass-dark glass-hover p-4 sm:p-6 rounded-3xl shadow-lg">
-          <h2 className="text-lg sm:text-xl font-semibold text-gray-800 dark:text-gray-200 mb-4">Stock Alerts</h2>
-          <div className="space-y-4">
+
+        {/* Stock Alerts */}
+        <div className="bg-white/45 dark:bg-white/[0.04] backdrop-blur-2xl dark:backdrop-blur-3xl border border-white/50 dark:border-white/[0.07] dark:border-t-white/[0.12] rounded-2xl p-5 sm:p-6 shadow-[0_4px_24px_rgba(0,0,0,0.04)] dark:shadow-[0_8px_32px_rgba(0,0,0,0.4),inset_0_1px_0_rgba(255,255,255,0.05)] animate-fade-in-up" style={{ animationDelay: '0.3s' }}>
+          <h2 className="text-base sm:text-lg font-semibold text-gray-800 dark:text-white/90 mb-4">Stock Alerts</h2>
+          <div className="space-y-3">
             {analytics.stockAlerts && analytics.stockAlerts.length > 0 ? (
               analytics.stockAlerts.map((alert: any) => (
-                <div key={alert.product_id} className="p-4 glass dark:glass-dark rounded-2xl border-l-4 border-red-500 shadow-sm transition-all hover:translate-x-1">
+                <div key={alert.product_id} className="p-4 bg-white/40 dark:bg-white/[0.03] rounded-xl border-l-3 border-l-red-400 dark:border-l-red-500/80 transition-all hover:bg-white/60 dark:hover:bg-white/[0.05] hover:translate-x-0.5 dark:shadow-[inset_0_1px_0_rgba(255,255,255,0.03)]">
                   <div className="flex justify-between items-start">
                     <div>
-                      <p className="text-xs font-bold text-red-500 uppercase tracking-widest mb-1 italic">Low Inventory</p>
-                      <h3 className="font-bold text-gray-900 dark:text-gray-100">{alert.product_name}</h3>
-                      <p className="text-[10px] text-gray-500 dark:text-gray-400 font-mono">{alert.product_sku}</p>
+                      <div className="flex items-center gap-2 mb-1">
+                        <span className="w-2 h-2 bg-red-400 dark:bg-red-500 rounded-full animate-pulse dark:shadow-[0_0_6px_rgba(239,68,68,0.4)]" />
+                        <p className="text-[10px] font-bold text-red-500 dark:text-red-400/90 uppercase tracking-widest">Low Inventory</p>
+                      </div>
+                      <h3 className="font-semibold text-gray-800 dark:text-white/90 text-sm">{alert.product_name}</h3>
+                      <p className="text-[10px] text-gray-400 dark:text-white/20 font-mono mt-0.5">{alert.product_sku}</p>
                     </div>
                     <div className="text-right">
-                      <span className="text-xl font-black text-red-600 dark:text-red-400">{alert.total_quantity}</span>
-                      <p className="text-[9px] font-bold text-gray-400 uppercase tracking-tighter">Units Left</p>
+                      <span className="text-xl font-black text-red-500 dark:text-red-400">{alert.total_quantity}</span>
+                      <p className="text-[9px] font-bold text-gray-400 dark:text-white/20 uppercase tracking-tighter">Units Left</p>
                     </div>
                   </div>
                 </div>
               ))
             ) : (
-              <div className="flex flex-col items-center justify-center p-8 opacity-50">
-                <Package className="w-12 h-12 text-gray-300 mb-2" />
-                <p className="text-sm font-bold text-gray-400 uppercase tracking-widest">Inventory Stable</p>
-                <p className="text-[10px] text-gray-500 text-center mt-1">All products above safety threshold</p>
+              <div className="flex flex-col items-center justify-center p-8 opacity-60">
+                <Package className="w-10 h-10 text-gray-300 dark:text-white/10 mb-3" />
+                <p className="text-xs font-bold text-gray-400 dark:text-white/20 uppercase tracking-widest">Inventory Stable</p>
+                <p className="text-[10px] text-gray-400 dark:text-white/15 text-center mt-1">All products above safety threshold</p>
               </div>
             )}
           </div>

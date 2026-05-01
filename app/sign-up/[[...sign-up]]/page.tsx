@@ -31,6 +31,14 @@ export default function SignUpPage() {
         <div className="glass-darker border border-white/20 shadow-2xl shadow-blue-500/5 rounded-[2.5rem] overflow-hidden transition-all duration-700 hover:border-white/30 w-full">
           <SignUp 
             appearance={{
+              variables: {
+                colorPrimary: '#00BFFF',
+                colorBackground: '#0a0e1f',
+                colorText: '#ffffff', // Forced white
+                colorInputBackground: 'rgba(255, 255, 255, 0.05)',
+                colorInputText: '#ffffff', // Forced white
+                colorTextSecondary: 'rgba(255, 255, 255, 0.5)',
+              },
               elements: {
                 rootBox: "w-full",
                 card: "w-full shadow-none bg-transparent p-6 sm:p-10 border-none",
@@ -81,20 +89,3 @@ export default function SignUpPage() {
     </div>
   );
 }
-
-function GlassFeatureCard({ icon, title, desc }: { icon: React.ReactNode, title: string, desc: string }) {
-  return (
-    <div className="glass-dark p-6 rounded-3xl group cursor-default hover:bg-white/15 transition-all duration-500 border border-white/5">
-      <div className="flex gap-5 items-start">
-        <div className="bg-white/10 p-2.5 rounded-xl text-white group-hover:scale-110 group-hover:rotate-6 transition-transform duration-500">
-          {icon}
-        </div>
-        <div className="space-y-1">
-          <h3 className="font-extrabold text-xl tracking-tight leading-none mb-1.5">{title}</h3>
-          <p className="text-sm text-blue-100/60 leading-relaxed font-medium">{desc}</p>
-        </div>
-      </div>
-    </div>
-  );
-}
-

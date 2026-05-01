@@ -158,37 +158,39 @@ const AssignDeliveryModal: React.FC<AssignDeliveryModalProps> = ({
 
   if (!isOpen) return null;
 
+  const inputClasses = "w-full rounded-xl p-3 text-sm text-gray-700 dark:text-white/80 bg-white/50 dark:bg-white/[0.04] border border-white/40 dark:border-white/[0.08] dark:border-t-white/[0.12] focus:ring-2 focus:ring-indigo-400/30 dark:focus:ring-indigo-400/20 focus:border-indigo-400/40 dark:focus:border-indigo-400/30 focus:outline-none backdrop-blur-sm transition-all duration-200 dark:shadow-[inset_0_1px_0_rgba(255,255,255,0.03)]";
+
   return (
-    <div className="fixed inset-0 bg-black/30 dark:bg-black/50 backdrop-blur-sm flex justify-center items-center z-50 p-4 overflow-y-auto">
-      <div className="glass dark:glass-dark p-4 sm:p-6 lg:p-8 rounded-3xl shadow-2xl w-full max-w-3xl border border-white/30 dark:border-white/10 my-auto max-h-[90vh] overflow-y-auto">
+    <div className="fixed inset-0 bg-black/20 dark:bg-black/60 backdrop-blur-md flex justify-center items-center z-50 p-4 overflow-y-auto">
+      <div className="bg-white/60 dark:bg-white/[0.05] backdrop-blur-3xl p-6 sm:p-8 rounded-2xl shadow-[0_24px_80px_rgba(0,0,0,0.1)] dark:shadow-[0_24px_80px_rgba(0,0,0,0.6),inset_0_1px_0_rgba(255,255,255,0.08)] w-full max-w-3xl border border-white/50 dark:border-white/[0.1] dark:border-t-white/[0.18] my-auto max-h-[90vh] overflow-y-auto">
         <div className="flex justify-between items-center mb-6">
-          <h2 className="text-2xl font-bold text-gray-800 dark:text-gray-200">Assign Delivery</h2>
+          <h2 className="text-xl font-bold text-gray-800 dark:text-white/90">Assign Delivery</h2>
           <button
             onClick={onClose}
-            className="glass dark:glass-dark p-2 rounded-2xl text-gray-400 dark:text-gray-500 hover:text-gray-600 dark:hover:text-gray-300 hover:bg-white/80 dark:hover:bg-white/10 transition-all duration-300"
+            className="p-2 rounded-xl text-gray-400 dark:text-white/30 hover:text-gray-600 dark:hover:text-white/60 hover:bg-white/50 dark:hover:bg-white/[0.06] transition-all duration-200"
           >
             <X className="w-5 h-5" />
           </button>
         </div>
 
-        <form onSubmit={handleSubmit} className="space-y-6">
+        <form onSubmit={handleSubmit} className="space-y-5">
           {/* Delivery Partner Selection */}
           <div>
-            <label htmlFor="partner" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+            <label htmlFor="partner" className="block text-sm font-medium text-gray-600 dark:text-white/40 mb-2">
               Delivery Partner *
             </label>
             <select
               id="partner"
               value={selectedPartner}
               onChange={(e) => setSelectedPartner(e.target.value)}
-              className="glass dark:glass-dark w-full rounded-2xl shadow-sm p-3 text-gray-700 dark:text-gray-200 focus:ring-2 focus:ring-indigo-400 focus:outline-none border border-white/30 dark:border-white/10"
+              className={inputClasses}
               required
             >
-              <option value="">Select Delivery Partner</option>
+              <option value="" className="dark:bg-slate-900">Select Delivery Partner</option>
               {partners
                 .filter(p => p.status === 'Active')
                 .map(p => (
-                  <option key={p.id} value={p.id}>
+                  <option key={p.id} value={p.id} className="dark:bg-slate-900">
                     {p.name} (Rating: {p.rating}, Region: {p.region})
                   </option>
                 ))}
@@ -198,62 +200,62 @@ const AssignDeliveryModal: React.FC<AssignDeliveryModalProps> = ({
           {/* Products Section */}
           <div>
             <div className="flex justify-between items-center mb-3">
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
+              <label className="block text-sm font-medium text-gray-600 dark:text-white/40">
                 Products to Deliver *
               </label>
               <button
                 type="button"
                 onClick={handleAddProduct}
                 disabled={availableProducts.length === 0}
-                className="flex items-center px-3 py-1.5 text-sm glass dark:glass-dark glass-hover text-gray-700 dark:text-gray-200 font-medium rounded-xl disabled:opacity-50 disabled:cursor-not-allowed"
+                className="flex items-center px-3 py-1.5 text-xs bg-white/40 dark:bg-white/[0.05] border border-white/40 dark:border-white/[0.08] text-gray-600 dark:text-white/70 font-medium rounded-lg hover:bg-white/60 dark:hover:bg-white/[0.08] transition-all disabled:opacity-50 disabled:cursor-not-allowed dark:shadow-[inset_0_1px_0_rgba(255,255,255,0.03)]"
               >
-                <Plus className="w-4 h-4 mr-1" />
+                <Plus className="w-3.5 h-3.5 mr-1" />
                 Add Product
               </button>
             </div>
 
             {deliveryItems.length === 0 ? (
-              <div className="p-4 glass dark:glass-dark rounded-2xl border border-white/30 dark:border-white/10 text-center text-gray-500 dark:text-gray-400">
-                No products added. Click "Add Product" to add items.
+              <div className="p-4 bg-white/30 dark:bg-white/[0.02] rounded-xl border border-dashed border-gray-300/40 dark:border-white/10 text-center text-gray-400 dark:text-white/20 text-sm">
+                No products added. Click &quot;Add Product&quot; to add items.
               </div>
             ) : (
               <div className="space-y-3">
                 {deliveryItems.map((item, index) => (
                   <div
                     key={index}
-                    className="p-4 glass dark:glass-dark rounded-2xl border border-white/30 dark:border-white/10"
+                    className="p-4 bg-white/30 dark:bg-white/[0.03] rounded-xl border border-white/30 dark:border-white/[0.05] dark:shadow-[inset_0_1px_0_rgba(255,255,255,0.03)]"
                   >
                     <div className="flex flex-col sm:flex-row gap-3">
                       <div className="flex-1">
                         <select
                           value={String(item.productId)}
                           onChange={(e) => handleProductChange(index, e.target.value)}
-                          className="glass dark:glass-dark w-full rounded-xl shadow-sm p-2 text-sm text-gray-700 dark:text-gray-200 focus:ring-2 focus:ring-indigo-400 focus:outline-none border border-white/30 dark:border-white/10"
+                          className={inputClasses}
                         >
                           {products
                             .filter(p => p.stock > 0 && (p.id === item.productId || !deliveryItems.some(di => di.productId === p.id && di !== item)))
                             .map(p => (
-                              <option key={p.id} value={p.id}>
+                              <option key={p.id} value={p.id} className="dark:bg-slate-900">
                                 {p.name} (SKU: {p.sku}, Stock: {p.stock})
                               </option>
                             ))}
                         </select>
                       </div>
                       <div className="flex items-center gap-2">
-                        <label className="text-sm text-gray-600 dark:text-gray-400 whitespace-nowrap">Quantity:</label>
+                        <label className="text-xs text-gray-500 dark:text-white/40 whitespace-nowrap">Qty:</label>
                         <input
                           type="number"
                           min="1"
                           max={item.availableStock}
                           value={item.quantity}
                           onChange={(e) => handleQuantityChange(index, parseInt(e.target.value, 10) || 1)}
-                          className="glass dark:glass-dark w-20 rounded-xl shadow-sm p-2 text-sm text-gray-700 dark:text-gray-200 focus:ring-2 focus:ring-indigo-400 focus:outline-none border border-white/30 dark:border-white/10"
+                          className="w-20 rounded-xl p-2 text-sm text-gray-700 dark:text-white/80 bg-white/50 dark:bg-white/[0.04] border border-white/40 dark:border-white/[0.08] focus:ring-2 focus:ring-indigo-400/30 dark:focus:ring-indigo-400/20 focus:outline-none transition-all dark:shadow-[inset_0_1px_0_rgba(255,255,255,0.03)]"
                         />
-                        <span className="text-sm text-gray-500 dark:text-gray-400">/ {item.availableStock}</span>
+                        <span className="text-xs text-gray-400 dark:text-white/20">/ {item.availableStock}</span>
                         <button
                           type="button"
                           onClick={() => handleRemoveProduct(index)}
-                          className="p-2 glass dark:glass-dark glass-hover text-red-500 dark:text-red-400 rounded-xl hover:bg-red-50 dark:hover:bg-red-900/20 transition-all"
+                          className="p-2 rounded-lg text-red-400 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-500/10 transition-all"
                         >
                           <Trash2 className="w-4 h-4" />
                         </button>
@@ -267,10 +269,10 @@ const AssignDeliveryModal: React.FC<AssignDeliveryModalProps> = ({
 
           {/* Customer Information */}
           <div className="space-y-4">
-            <h3 className="text-lg font-semibold text-gray-800 dark:text-gray-200">Customer Information</h3>
+            <h3 className="text-base font-semibold text-gray-800 dark:text-white/90">Customer Information</h3>
             
             <div>
-              <label htmlFor="customerName" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+              <label htmlFor="customerName" className="block text-sm font-medium text-gray-600 dark:text-white/40 mb-2">
                 Customer Name *
               </label>
               <input
@@ -278,14 +280,14 @@ const AssignDeliveryModal: React.FC<AssignDeliveryModalProps> = ({
                 id="customerName"
                 value={customerName}
                 onChange={(e) => setCustomerName(e.target.value)}
-                className="glass dark:glass-dark w-full rounded-2xl shadow-sm p-3 text-gray-700 dark:text-gray-200 focus:ring-2 focus:ring-indigo-400 focus:outline-none border border-white/30 dark:border-white/10"
+                className={inputClasses}
                 required
               />
             </div>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div>
-                <label htmlFor="customerEmail" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                <label htmlFor="customerEmail" className="block text-sm font-medium text-gray-600 dark:text-white/40 mb-2">
                   Email
                 </label>
                 <input
@@ -293,12 +295,12 @@ const AssignDeliveryModal: React.FC<AssignDeliveryModalProps> = ({
                   id="customerEmail"
                   value={customerEmail}
                   onChange={(e) => setCustomerEmail(e.target.value)}
-                  className="glass dark:glass-dark w-full rounded-2xl shadow-sm p-3 text-gray-700 dark:text-gray-200 focus:ring-2 focus:ring-indigo-400 focus:outline-none border border-white/30 dark:border-white/10"
+                  className={inputClasses}
                 />
               </div>
 
               <div>
-                <label htmlFor="customerPhone" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                <label htmlFor="customerPhone" className="block text-sm font-medium text-gray-600 dark:text-white/40 mb-2">
                   Phone
                 </label>
                 <input
@@ -306,13 +308,13 @@ const AssignDeliveryModal: React.FC<AssignDeliveryModalProps> = ({
                   id="customerPhone"
                   value={customerPhone}
                   onChange={(e) => setCustomerPhone(e.target.value)}
-                  className="glass dark:glass-dark w-full rounded-2xl shadow-sm p-3 text-gray-700 dark:text-gray-200 focus:ring-2 focus:ring-indigo-400 focus:outline-none border border-white/30 dark:border-white/10"
+                  className={inputClasses}
                 />
               </div>
             </div>
 
             <div>
-              <label htmlFor="deliveryAddress" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+              <label htmlFor="deliveryAddress" className="block text-sm font-medium text-gray-600 dark:text-white/40 mb-2">
                 Delivery Address *
               </label>
               <textarea
@@ -320,31 +322,31 @@ const AssignDeliveryModal: React.FC<AssignDeliveryModalProps> = ({
                 value={deliveryAddress}
                 onChange={(e) => setDeliveryAddress(e.target.value)}
                 rows={3}
-                className="glass dark:glass-dark w-full rounded-2xl shadow-sm p-3 text-gray-700 dark:text-gray-200 focus:ring-2 focus:ring-indigo-400 focus:outline-none border border-white/30 dark:border-white/10"
+                className={inputClasses}
                 required
               />
             </div>
           </div>
 
           {error && (
-            <div className="p-4 glass dark:glass-dark rounded-2xl border border-red-200 dark:border-red-800 text-red-700 dark:text-red-400 text-sm">
+            <div className="p-3 rounded-xl bg-red-50/50 dark:bg-red-500/10 border border-red-200/50 dark:border-red-500/20 text-red-600 dark:text-red-400 text-sm">
               {error}
             </div>
           )}
 
-          <div className="pt-4 flex gap-3">
+          <div className="pt-2 flex gap-3">
             <button
               type="button"
               onClick={onClose}
               disabled={loading}
-              className="flex-1 py-3 glass dark:glass-dark glass-hover text-gray-700 dark:text-gray-200 font-semibold rounded-2xl shadow-lg hover:bg-white/90 dark:hover:bg-white/10 transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed"
+              className="flex-1 py-3 bg-white/40 dark:bg-white/[0.05] border border-white/40 dark:border-white/[0.08] rounded-xl text-gray-500 dark:text-white/40 font-medium hover:bg-white/60 dark:hover:bg-white/[0.08] transition-all text-sm disabled:opacity-50 disabled:cursor-not-allowed dark:shadow-[inset_0_1px_0_rgba(255,255,255,0.03)]"
             >
               Cancel
             </button>
             <button
               type="submit"
               disabled={loading || deliveryItems.length === 0 || !selectedPartner}
-              className="flex-1 py-3 glass dark:glass-dark glass-hover text-gray-700 dark:text-gray-200 font-semibold rounded-2xl shadow-lg hover:bg-white/90 dark:hover:bg-white/10 transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed"
+              className="flex-1 py-3 bg-gradient-to-r from-indigo-500 to-purple-600 text-white font-semibold rounded-xl shadow-lg shadow-indigo-500/20 hover:shadow-indigo-500/30 transition-all text-sm disabled:opacity-50 disabled:cursor-not-allowed"
             >
               {loading ? 'Assigning...' : 'Assign Delivery'}
             </button>
@@ -356,5 +358,3 @@ const AssignDeliveryModal: React.FC<AssignDeliveryModalProps> = ({
 };
 
 export default AssignDeliveryModal;
-
-

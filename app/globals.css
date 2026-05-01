@@ -2,75 +2,173 @@
 @tailwind components;
 @tailwind utilities;
 
+/* ========================================
+   LIGHT MODE VARIABLES
+   ======================================== */
+:root {
+  --glass-bg: rgba(255, 255, 255, 0.55);
+  --glass-bg-hover: rgba(255, 255, 255, 0.72);
+  --glass-border: rgba(255, 255, 255, 0.45);
+  --glass-shadow: 0 8px 32px rgba(31, 38, 135, 0.08);
+  --glass-shadow-hover: 0 16px 48px rgba(31, 38, 135, 0.14);
+  --blur-amount: 24px;
+  --sidebar-bg: rgba(255, 255, 255, 0.35);
+  --card-radius: 20px;
+  --accent-blue: #4c8bf5;
+  --accent-green: #34d399;
+  --accent-red: #f87171;
+}
+
+/* ========================================
+   DARK MODE VARIABLES — APPLE FLUID GLASS
+   ======================================== */
+.dark {
+  --glass-bg: rgba(255, 255, 255, 0.06);
+  --glass-bg-hover: rgba(255, 255, 255, 0.1);
+  --glass-border: rgba(255, 255, 255, 0.12);
+  --glass-shadow: 0 8px 32px rgba(0, 0, 0, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.06);
+  --glass-shadow-hover: 0 20px 60px rgba(0, 0, 0, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.1);
+  --sidebar-bg: rgba(255, 255, 255, 0.04);
+}
+
+* {
+  box-sizing: border-box;
+}
+
+/* ========================================
+   BODY — BACKGROUNDS
+   ======================================== */
 body {
   margin: 0;
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
     'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue',
     sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
-  background: linear-gradient(135deg, #f5f7fa 0%, #e8ecf1 50%, #f0f4f8 100%);
+  background: linear-gradient(145deg, #dbeafe 0%, #c7d2fe 25%, #e0e7ff 50%, #bfdbfe 75%, #ddd6fe 100%);
+  background-attachment: fixed;
   min-height: 100vh;
-  transition: background 0.3s ease;
+  transition: background 0.5s ease;
+  overflow-x: hidden;
 }
 
+/* Dark mode: rich, vibrant deep background — NOT flat dark gray */
 .dark body {
-  background: linear-gradient(135deg, #0f172a 0%, #1e293b 50%, #334155 100%);
+  background: 
+    radial-gradient(ellipse 80% 60% at 20% 10%, rgba(56, 30, 114, 0.5) 0%, transparent 60%),
+    radial-gradient(ellipse 70% 50% at 80% 80%, rgba(17, 24, 80, 0.6) 0%, transparent 55%),
+    radial-gradient(ellipse 60% 40% at 50% 50%, rgba(30, 58, 138, 0.25) 0%, transparent 50%),
+    linear-gradient(145deg, #080c18 0%, #0c1029 20%, #0a0e1f 40%, #0d1130 60%, #080c18 80%, #0c1029 100%);
+  background-attachment: fixed;
 }
+
+/* ========================================
+   GLASSMORPHISM CORE UTILITIES
+   ======================================== */
 
 @layer utilities {
+
+  /* Primary glass — cards, panels, content areas */
   .glass {
-    background: rgba(255, 255, 255, 0.7);
-    backdrop-filter: blur(20px) saturate(180%);
-    -webkit-backdrop-filter: blur(20px) saturate(180%);
-    border: 1px solid rgba(255, 255, 255, 0.3);
+    background: var(--glass-bg);
+    backdrop-filter: blur(var(--blur-amount)) saturate(180%);
+    -webkit-backdrop-filter: blur(var(--blur-amount)) saturate(180%);
+    border: 1px solid var(--glass-border);
+    box-shadow: var(--glass-shadow);
   }
-  
+
+  /* DARK MODE GLASS — Apple-level fluid glass */
   .dark .glass {
-    background: rgba(30, 41, 59, 0.7);
-    border: 1px solid rgba(255, 255, 255, 0.1);
+    background: rgba(255, 255, 255, 0.04);
+    backdrop-filter: blur(40px) saturate(200%) brightness(1.1);
+    -webkit-backdrop-filter: blur(40px) saturate(200%) brightness(1.1);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-top: 1px solid rgba(255, 255, 255, 0.15);
+    box-shadow:
+      0 8px 32px rgba(0, 0, 0, 0.5),
+      inset 0 1px 0 rgba(255, 255, 255, 0.05),
+      inset 0 0 20px rgba(255, 255, 255, 0.01);
   }
-  
+
+  /* Dark variant glass — sidebar, heavier panels */
   .glass-dark {
-    background: rgba(255, 255, 255, 0.1);
-    backdrop-filter: blur(20px) saturate(180%);
-    -webkit-backdrop-filter: blur(20px) saturate(180%);
-    border: 1px solid rgba(255, 255, 255, 0.2);
+    background: rgba(255, 255, 255, 0.08);
+    backdrop-filter: blur(30px) saturate(160%);
+    -webkit-backdrop-filter: blur(30px) saturate(160%);
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
   }
-  
+
   .dark .glass-dark {
-    background: rgba(15, 23, 42, 0.8);
+    background: rgba(255, 255, 255, 0.03);
+    backdrop-filter: blur(40px) saturate(200%) brightness(1.05);
+    -webkit-backdrop-filter: blur(40px) saturate(200%) brightness(1.05);
+    border: 1px solid rgba(255, 255, 255, 0.06);
+    border-top: 1px solid rgba(255, 255, 255, 0.12);
+    box-shadow:
+      0 8px 32px rgba(0, 0, 0, 0.4),
+      inset 0 1px 0 rgba(255, 255, 255, 0.04);
+  }
+
+  /* Subtle glass — nested elements */
+  .glass-subtle {
+    background: rgba(255, 255, 255, 0.3);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    border: 1px solid rgba(255, 255, 255, 0.35);
+  }
+
+  .dark .glass-subtle {
+    background: rgba(255, 255, 255, 0.025);
+    backdrop-filter: blur(20px) saturate(150%);
+    -webkit-backdrop-filter: blur(20px) saturate(150%);
+    border: 1px solid rgba(255, 255, 255, 0.05);
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.03);
+  }
+
+  /* Hover effect for glass elements */
+  .glass-hover {
+    transition: all 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+
+  .glass-hover:hover {
+    background: var(--glass-bg-hover);
+    transform: translateY(-2px);
+    box-shadow: var(--glass-shadow-hover);
+    border-color: rgba(255, 255, 255, 0.6);
+  }
+
+  .dark .glass-hover:hover {
+    background: rgba(255, 255, 255, 0.08);
+    box-shadow:
+      0 20px 60px rgba(0, 0, 0, 0.55),
+      inset 0 1px 0 rgba(255, 255, 255, 0.1),
+      inset 0 0 30px rgba(255, 255, 255, 0.02);
+    border-color: rgba(255, 255, 255, 0.18);
+    border-top-color: rgba(255, 255, 255, 0.25);
+  }
+
+  /* Darker glass for sign-in overlays */
+  .glass-darker {
+    background: rgba(15, 23, 42, 0.5);
+    backdrop-filter: blur(40px) saturate(150%);
+    -webkit-backdrop-filter: blur(40px) saturate(150%);
     border: 1px solid rgba(255, 255, 255, 0.1);
   }
-  
-  .glass-hover {
-    transition: all 0.3s ease;
-  }
-  
-  .glass-hover:hover {
-    background: rgba(255, 255, 255, 0.85);
-    transform: translateY(-2px);
-    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
-  }
-  
-  .dark .glass-hover:hover {
-    background: rgba(30, 41, 59, 0.9);
-    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
-  }
-  
+
+  /* ========================================
+     ANIMATIONS
+     ======================================== */
+
   @keyframes spin-smooth {
-    from {
-      transform: rotate(0deg);
-    }
-    to {
-      transform: rotate(360deg);
-    }
+    from { transform: rotate(0deg); }
+    to { transform: rotate(360deg); }
   }
-  
+
   .animate-spin-smooth {
     animation: spin-smooth 1.2s linear infinite;
   }
-  
+
   @keyframes pulse-dot {
     0%, 100% {
       opacity: 0.3;
@@ -81,21 +179,15 @@ body {
       transform: scale(1.2);
     }
   }
-  
+
   .animate-pulse-dot {
     animation: pulse-dot 1.4s ease-in-out infinite;
   }
 
   @keyframes blob-bounce {
-    0%, 100% {
-      transform: translate(0, 0) scale(1);
-    }
-    33% {
-      transform: translate(30px, -50px) scale(1.1);
-    }
-    66% {
-      transform: translate(-20px, 20px) scale(0.9);
-    }
+    0%, 100% { transform: translate(0, 0) scale(1); }
+    33% { transform: translate(30px, -50px) scale(1.1); }
+    66% { transform: translate(-20px, 20px) scale(0.9); }
   }
 
   .animate-blob {
@@ -110,15 +202,85 @@ body {
     animation-delay: 4s;
   }
 
-  .glass-darker {
-    background: rgba(15, 23, 42, 0.6);
-    backdrop-filter: blur(40px) saturate(150%);
-    -webkit-backdrop-filter: blur(40px) saturate(150%);
-    border: 1px solid rgba(255, 255, 255, 0.1);
+  @keyframes float-gentle {
+    0%, 100% { transform: translateY(0px); }
+    50% { transform: translateY(-8px); }
+  }
+
+  .animate-float {
+    animation: float-gentle 6s ease-in-out infinite;
+  }
+
+  @keyframes shimmer {
+    0% { background-position: -200% 0; }
+    100% { background-position: 200% 0; }
+  }
+
+  .animate-shimmer {
+    background: linear-gradient(90deg, transparent, rgba(255,255,255,0.08), transparent);
+    background-size: 200% 100%;
+    animation: shimmer 2s infinite;
+  }
+
+  @keyframes fade-in-up {
+    from {
+      opacity: 0;
+      transform: translateY(16px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  .animate-fade-in-up {
+    animation: fade-in-up 0.5s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+  }
+
+  @keyframes glow-pulse {
+    0%, 100% { opacity: 0.4; }
+    50% { opacity: 0.8; }
+  }
+
+  .animate-glow {
+    animation: glow-pulse 4s ease-in-out infinite;
   }
 }
 
-/* Force Clerk to match our glass theme */
+/* ========================================
+   SCROLLBAR STYLING
+   ======================================== */
+
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: rgba(148, 163, 184, 0.3);
+  border-radius: 999px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(148, 163, 184, 0.5);
+}
+
+.dark ::-webkit-scrollbar-thumb {
+  background: rgba(148, 163, 184, 0.15);
+}
+
+.dark ::-webkit-scrollbar-thumb:hover {
+  background: rgba(148, 163, 184, 0.3);
+}
+
+/* ========================================
+   CLERK THEME OVERRIDES
+   ======================================== */
+
 .cl-rootBox, .cl-cardBox {
   width: 100% !important;
   max-width: 100% !important;
@@ -134,7 +296,7 @@ body {
   margin: 0 !important;
 }
 
-.cl-main, .cl-footer, .cl-footerAction, .cl-internal-ph6x20, .cl-internal-1h6fgzy, .cl-internal-fqc41u, .cl-internal-176f18n {
+.cl-main, .cl-footer, .cl-footerAction {
   background-color: transparent !important;
   background: transparent !important;
   border: none !important;
@@ -142,45 +304,42 @@ body {
   max-width: 100% !important;
 }
 
-.cl-headerSubtitle, .cl-dividerText, .cl-footerActionText {
-  color: rgba(255, 255, 255, 0.5) !important;
+/* ========================================
+   GLASS INPUT STYLING
+   ======================================== */
+
+input.glass-input,
+select.glass-input,
+textarea.glass-input {
+  background: rgba(255, 255, 255, 0.45);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(255, 255, 255, 0.4);
+  transition: all 0.3s ease;
 }
 
-.cl-formFieldLabel {
-  color: rgba(255, 255, 255, 0.6) !important;
+input.glass-input:focus,
+select.glass-input:focus,
+textarea.glass-input:focus {
+  background: rgba(255, 255, 255, 0.6);
+  border-color: rgba(99, 102, 241, 0.5);
+  box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.15);
 }
 
-.cl-dividerLine {
-  background-color: rgba(255, 255, 255, 0.1) !important;
+.dark input.glass-input,
+.dark select.glass-input,
+.dark textarea.glass-input {
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.04);
 }
 
-.cl-socialButtonsIconButton {
-  border-color: rgba(255, 255, 255, 0.1) !important;
-  background-color: rgba(255, 255, 255, 0.05) !important;
-}
-
-.cl-card {
-  width: 100% !important;
-  max-width: 100% !important;
-  background-color: transparent !important;
-  box-shadow: none !important;
-  border: none !important;
-}
-
-.cl-main, .cl-footer, .cl-footerAction, .cl-internal-ph6x20 {
-  background-color: transparent !important;
-  background: transparent !important;
-  border: none !important;
-}
-
-.cl-headerSubtitle, .cl-dividerText, .cl-footerActionText {
-  color: rgba(255, 255, 255, 0.5) !important;
-}
-
-.cl-formFieldLabel {
-  color: rgba(255, 255, 255, 0.6) !important;
-}
-
-.cl-dividerLine {
-  background-color: rgba(255, 255, 255, 0.1) !important;
+.dark input.glass-input:focus,
+.dark select.glass-input:focus,
+.dark textarea.glass-input:focus {
+  background: rgba(255, 255, 255, 0.07);
+  border-color: rgba(99, 102, 241, 0.35);
+  box-shadow:
+    0 0 0 3px rgba(99, 102, 241, 0.1),
+    inset 0 1px 0 rgba(255, 255, 255, 0.06);
 }

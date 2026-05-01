@@ -9,47 +9,47 @@ const ProfileContent: React.FC = () => {
 
   return (
     <div className="p-4 sm:p-6 lg:p-8 space-y-4 sm:space-y-6">
-      <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold text-gray-800 dark:text-gray-100">User Profile</h1>
-      <div className="flex justify-center">
-        <div className="w-full max-w-4xl">
+      <div className="animate-fade-in-up">
+        <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold text-gray-800 dark:text-white">User Profile</h1>
+        <p className="text-gray-500 dark:text-white/35 mt-1 text-sm">Manage your account settings and preferences</p>
+      </div>
+      
+      <div className="flex justify-center animate-fade-in-up" style={{ animationDelay: '0.1s' }}>
+        <div className="w-full max-w-5xl h-auto">
           <UserProfile
             appearance={{
               variables: {
-                colorPrimary: theme === 'dark' ? '#3b82f6' : '#2563eb',
-                colorBackground: theme === 'dark' ? '#1e293b' : '#ffffff',
-                colorInputBackground: theme === 'dark' ? '#334155' : '#f8fafc',
-                colorText: theme === 'dark' ? '#f1f5f9' : '#0f172a',
-                colorTextSecondary: theme === 'dark' ? '#cbd5e1' : '#64748b',
-                colorInputText: theme === 'dark' ? '#f1f5f9' : '#0f172a',
-                borderRadius: '0.75rem',
+                colorPrimary: '#6366f1',
+                // Forcing visibility with solid-enough glass background
+                colorBackground: theme === 'dark' ? '#0f172a' : '#ffffff',
+                colorText: theme === 'dark' ? '#ffffff' : '#111827',
+                colorTextSecondary: theme === 'dark' ? 'rgba(255, 255, 255, 0.5)' : '#6b7280',
+                colorInputBackground: theme === 'dark' ? 'rgba(255, 255, 255, 0.05)' : '#f9fafb',
+                colorInputText: theme === 'dark' ? '#ffffff' : '#111827',
+                borderRadius: '1.25rem',
               },
               elements: {
-                rootBox: "mx-auto w-full",
-                card: "shadow-lg rounded-3xl",
-                cardBox: theme === 'dark' 
-                  ? "bg-slate-800 border border-slate-700" 
-                  : "bg-white border border-gray-200",
-                headerTitle: theme === 'dark' 
-                  ? "text-slate-100" 
-                  : "text-gray-900",
-                headerSubtitle: theme === 'dark' 
-                  ? "text-slate-400" 
-                  : "text-gray-600",
-                formButtonPrimary: theme === 'dark'
-                  ? "bg-blue-600 hover:bg-blue-700 text-white"
-                  : "bg-blue-600 hover:bg-blue-700 text-white",
-                formFieldInput: theme === 'dark'
-                  ? "bg-slate-700 border-slate-600 text-slate-100"
-                  : "bg-slate-50 border-gray-300 text-gray-900",
-                formFieldLabel: theme === 'dark'
-                  ? "text-slate-300"
-                  : "text-gray-700",
-                dividerLine: theme === 'dark'
-                  ? "bg-slate-700"
-                  : "bg-gray-200",
-                dividerText: theme === 'dark'
-                  ? "text-slate-400"
-                  : "text-gray-500",
+                rootBox: "mx-auto w-full flex items-start justify-center min-h-0",
+                card: "bg-white/70 dark:bg-black/40 backdrop-blur-3xl border border-white/50 dark:border-white/[0.08] dark:border-t-white/[0.15] shadow-2xl rounded-[2rem] overflow-hidden w-full h-auto max-h-none",
+                cardBox: "bg-transparent shadow-none border-none h-auto",
+                navbar: "bg-white/10 dark:bg-black/20 border-r border-gray-200/20 dark:border-white/5 w-64 h-auto min-h-0 self-stretch",
+                navbarButton: "text-gray-600 dark:text-white/40 hover:bg-white/20 dark:hover:bg-white/5 rounded-xl transition-all h-10",
+                navbarButtonActive: "bg-white/40 dark:bg-white/10 text-gray-900 dark:text-white shadow-sm font-semibold border-none",
+                headerTitle: "text-gray-900 dark:text-white font-black",
+                headerSubtitle: "text-gray-500 dark:text-white/40",
+                formButtonPrimary: "bg-gradient-to-r from-indigo-500 to-purple-600 hover:opacity-90 transition-all shadow-md",
+                formFieldInput: "bg-white dark:bg-white/[0.03] border-gray-200 dark:border-white/10 text-gray-900 dark:text-white rounded-xl",
+                formFieldLabel: "text-gray-700 dark:text-white/50 font-semibold",
+                scrollBox: "bg-transparent h-auto overflow-visible",
+                pageScrollBox: "bg-transparent p-6 sm:p-8 h-auto overflow-visible",
+                navbarMobileMenuButton: "text-gray-800 dark:text-white",
+                accordionTriggerButton: "text-gray-800 dark:text-white hover:bg-white/10",
+                profileSectionTitleText: "text-gray-900 dark:text-white/90 font-bold border-b border-gray-200/20 dark:border-white/5 pb-2",
+                userPreviewMainIdentifier: "text-gray-900 dark:text-white font-bold",
+                userPreviewSecondaryIdentifier: "text-gray-500 dark:text-white/40",
+                breadcrumbsItem: "text-gray-500 dark:text-white/30",
+                breadcrumbsItemActive: "text-gray-900 dark:text-white font-bold",
+                dividerLine: "bg-gray-200/20 dark:bg-white/5",
               },
             }}
           />

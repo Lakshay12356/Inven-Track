@@ -1,5 +1,4 @@
 'use client';
-// Force re-save to trigger Turbopack update
 
 import React, { useState } from 'react';
 import { X } from 'lucide-react';
@@ -58,64 +57,66 @@ const AddDeliveryPartnerModal: React.FC<AddDeliveryPartnerModalProps> = ({ isOpe
 
   if (!isOpen) return null;
 
+  const inputClasses = "w-full rounded-xl p-3 text-sm text-gray-700 dark:text-white/80 bg-white/50 dark:bg-white/[0.04] border border-white/40 dark:border-white/[0.08] dark:border-t-white/[0.12] focus:ring-2 focus:ring-indigo-400/30 dark:focus:ring-indigo-400/20 focus:border-indigo-400/40 dark:focus:border-indigo-400/30 focus:outline-none backdrop-blur-sm transition-all duration-200 dark:shadow-[inset_0_1px_0_rgba(255,255,255,0.03)]";
+
   return (
-    <div className="fixed inset-0 bg-black/30 dark:bg-black/50 backdrop-blur-sm flex justify-center items-center z-50 p-4 overflow-y-auto">
-      <div className="glass dark:glass-dark p-4 sm:p-6 lg:p-8 rounded-3xl shadow-2xl w-full max-w-lg border border-white/30 dark:border-white/10 my-auto">
+    <div className="fixed inset-0 bg-black/20 dark:bg-black/60 backdrop-blur-md flex justify-center items-center z-50 p-4 overflow-y-auto">
+      <div className="bg-white/60 dark:bg-white/[0.05] backdrop-blur-3xl p-6 sm:p-8 rounded-2xl shadow-[0_24px_80px_rgba(0,0,0,0.1)] dark:shadow-[0_24px_80px_rgba(0,0,0,0.6),inset_0_1px_0_rgba(255,255,255,0.08)] w-full max-w-lg border border-white/50 dark:border-white/[0.1] dark:border-t-white/[0.18] my-auto">
         <div className="flex justify-between items-center mb-6">
-          <h2 className="text-2xl font-bold text-gray-800 dark:text-gray-200">Add New Delivery Partner</h2>
-          <button onClick={onClose} className="glass dark:glass-dark p-2 rounded-2xl text-gray-400 dark:text-gray-500 hover:text-gray-600 dark:hover:text-gray-300 hover:bg-white/80 dark:hover:bg-white/10 transition-all duration-300">
+          <h2 className="text-xl font-bold text-gray-800 dark:text-white/90">Add New Delivery Partner</h2>
+          <button onClick={onClose} className="p-2 rounded-xl text-gray-400 dark:text-white/30 hover:text-gray-600 dark:hover:text-white/60 hover:bg-white/50 dark:hover:bg-white/[0.06] transition-all duration-200">
             <X className="w-5 h-5" />
           </button>
         </div>
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
-            <label htmlFor="name" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Partner Name</label>
+            <label htmlFor="name" className="block text-sm font-medium text-gray-600 dark:text-white/40 mb-2">Partner Name</label>
             <input
               type="text"
               name="name"
               id="name"
               value={newPartner.name}
               onChange={handleInputChange}
-              className="glass dark:glass-dark w-full rounded-2xl shadow-sm p-3 text-gray-700 dark:text-gray-200 focus:ring-2 focus:ring-indigo-400 focus:outline-none border border-white/30 dark:border-white/10"
+              className={inputClasses}
               required
             />
           </div>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
-              <label htmlFor="email" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Email Address</label>
+              <label htmlFor="email" className="block text-sm font-medium text-gray-600 dark:text-white/40 mb-2">Email Address</label>
               <input
                 type="email"
                 name="email"
                 id="email"
                 value={newPartner.email}
                 onChange={handleInputChange}
-                className="glass dark:glass-dark w-full rounded-2xl shadow-sm p-3 text-gray-700 dark:text-gray-200 focus:ring-2 focus:ring-indigo-400 focus:outline-none border border-white/30 dark:border-white/10"
+                className={inputClasses}
                 required
               />
             </div>
             <div>
-              <label htmlFor="password" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Temporary Password</label>
+              <label htmlFor="password" className="block text-sm font-medium text-gray-600 dark:text-white/40 mb-2">Temporary Password</label>
               <input
                 type="password"
                 name="password"
                 id="password"
                 value={newPartner.password}
                 onChange={handleInputChange}
-                className="glass dark:glass-dark w-full rounded-2xl shadow-sm p-3 text-gray-700 dark:text-gray-200 focus:ring-2 focus:ring-indigo-400 focus:outline-none border border-white/30 dark:border-white/10"
+                className={inputClasses}
                 required
               />
             </div>
           </div>
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <label htmlFor="rating" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Rating</label>
+              <label htmlFor="rating" className="block text-sm font-medium text-gray-600 dark:text-white/40 mb-2">Rating</label>
               <input
                 type="number"
                 name="rating"
                 id="rating"
                 value={newPartner.rating}
                 onChange={handleInputChange}
-                className="glass dark:glass-dark w-full rounded-2xl shadow-sm p-3 text-gray-700 dark:text-gray-200 focus:ring-2 focus:ring-indigo-400 focus:outline-none border border-white/30 dark:border-white/10"
+                className={inputClasses}
                 step="0.1"
                 min="0"
                 max="5"
@@ -123,42 +124,42 @@ const AddDeliveryPartnerModal: React.FC<AddDeliveryPartnerModalProps> = ({ isOpe
               />
             </div>
             <div>
-              <label htmlFor="status" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Status</label>
+              <label htmlFor="status" className="block text-sm font-medium text-gray-600 dark:text-white/40 mb-2">Status</label>
               <select
                 name="status"
                 id="status"
                 value={newPartner.status}
                 onChange={handleInputChange}
-                className="glass dark:glass-dark w-full rounded-2xl shadow-sm p-3 text-gray-700 dark:text-gray-200 focus:ring-2 focus:ring-indigo-400 focus:outline-none border border-white/30 dark:border-white/10"
+                className={inputClasses}
                 required
               >
-                <option value="Active">Active</option>
-                <option value="Pending Review">Pending Review</option>
+                <option value="Active" className="dark:bg-slate-900">Active</option>
+                <option value="Pending Review" className="dark:bg-slate-900">Pending Review</option>
               </select>
             </div>
           </div>
           <div>
-            <label htmlFor="region" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Region</label>
+            <label htmlFor="region" className="block text-sm font-medium text-gray-600 dark:text-white/40 mb-2">Region</label>
             <input
               type="text"
               name="region"
               id="region"
               value={newPartner.region}
               onChange={handleInputChange}
-              className="glass dark:glass-dark w-full rounded-2xl shadow-sm p-3 text-gray-700 dark:text-gray-200 focus:ring-2 focus:ring-indigo-400 focus:outline-none border border-white/30 dark:border-white/10"
+              className={inputClasses}
               required
             />
           </div>
           {error && (
-            <div className="p-4 glass dark:glass-dark rounded-2xl border border-red-200 dark:border-red-800 text-red-700 dark:text-red-400 text-sm">
+            <div className="p-3 rounded-xl bg-red-50/50 dark:bg-red-500/10 border border-red-200/50 dark:border-red-500/20 text-red-600 dark:text-red-400 text-sm">
               {error}
             </div>
           )}
-          <div className="pt-4">
+          <div className="pt-2">
             <button
               type="submit"
               disabled={loading}
-              className="w-full py-3 glass dark:glass-dark glass-hover text-gray-700 dark:text-gray-200 font-semibold rounded-2xl shadow-lg hover:bg-white/90 dark:hover:bg-white/10 transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed"
+              className="w-full py-3 bg-gradient-to-r from-indigo-500 to-purple-600 text-white font-semibold rounded-xl shadow-lg shadow-indigo-500/20 hover:shadow-indigo-500/30 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed text-sm"
             >
               {loading ? 'Saving...' : 'Save Delivery Partner'}
             </button>
@@ -170,5 +171,3 @@ const AddDeliveryPartnerModal: React.FC<AddDeliveryPartnerModalProps> = ({ isOpe
 };
 
 export default AddDeliveryPartnerModal;
-
-

@@ -1,319 +1,160 @@
-# Supabase Database Setup Guide
+# Supabase Database Setup Guide (Authoritative)
 
-This guide will help you set up your Supabase database tables for the IMS application.
+This guide contains the definitive SQL schema for the Inven-Track application. Run this script in your Supabase SQL Editor to ensure perfect alignment with the application code.
 
-## Required Tables
+## 1. Unified Reset & Creation Script
 
-### 1. Users Table
-
-Create a table named `users` to store Clerk user IDs and associate them with Supabase records:
+> [!CAUTION]
+> **Data Loss**: Running this script will DROP existing tables. Back up data if necessary.
 
 ```sql
-CREATE TABLE users (
-  id BIGSERIAL PRIMARY KEY,
-  clerk_user_id TEXT NOT NULL UNIQUE,
+-- CLEANUP
+DROP VIEW IF EXISTS tenant_daily_analytics CASCADE;
+DROP VIEW IF EXISTS tenant_stock_alerts CASCADE;
+DROP TABLE IF EXISTS inventory_movements CASCADE;
+DROP TABLE IF EXISTS delivery_order_items CASCADE;
+DROP TABLE IF EXISTS delivery_orders CASCADE;
+DROP TABLE IF EXISTS delivery_partners CASCADE;
+DROP TABLE IF EXISTS stock_levels CASCADE;
+DROP TABLE IF EXISTS stores CASCADE;
+DROP TABLE IF EXISTS branches CASCADE;
+DROP TABLE IF EXISTS products CASCADE;
+DROP TABLE IF EXISTS users CASCADE;
+DROP TABLE IF EXISTS profiles CASCADE;
+
+-- CORE TABLES
+CREATE TABLE profiles (
+  id TEXT PRIMARY KEY,
   email TEXT,
-  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
-  updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+  role TEXT DEFAULT 'manager',
+  created_at TIMESTAMPTZ DEFAULT NOW(),
+  updated_at TIMESTAMPTZ DEFAULT NOW()
 );
 
--- Create index for faster lookups
-CREATE INDEX idx_users_clerk_user_id ON users(clerk_user_id);
-```
-
-### 2. Products Table
-
-Create a table named `products` with the following structure. Note: `user_id` links products to specific users:
-
-```sql
 CREATE TABLE products (
   id BIGSERIAL PRIMARY KEY,
-  user_id BIGINT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  user_id TEXT REFERENCES profiles(id) ON DELETE CASCADE,
   name TEXT NOT NULL,
   sku TEXT NOT NULL,
-  stock INTEGER NOT NULL DEFAULT 0,
-  price DECIMAL(10, 2) NOT NULL,
-  last_updated DATE NOT NULL DEFAULT CURRENT_DATE,
-  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
-  UNIQUE(user_id, sku) -- Ensure SKU is unique per user
+  sale_price DECIMAL(10, 2) NOT NULL DEFAULT 0,
+  created_at TIMESTAMPTZ DEFAULT NOW(),
+  updated_at TIMESTAMPTZ DEFAULT NOW(),
+  UNIQUE(user_id, sku)
 );
 
--- Create index for faster user-based queries
-CREATE INDEX idx_products_user_id ON products(user_id);
-```
+CREATE TABLE branches (
+  id BIGSERIAL PRIMARY KEY,
+  user_id TEXT REFERENCES profiles(id) ON DELETE CASCADE,
+  name TEXT NOT NULL,
+  location TEXT,
+  created_at TIMESTAMPTZ DEFAULT NOW()
+);
 
-### 3. Delivery Partners Table
+CREATE TABLE stores (
+  id BIGSERIAL PRIMARY KEY,
+  branch_id BIGINT REFERENCES branches(id) ON DELETE CASCADE,
+  name TEXT NOT NULL,
+  type TEXT DEFAULT 'warehouse_store',
+  created_at TIMESTAMPTZ DEFAULT NOW()
+);
 
-Create a table named `delivery_partners` with the following structure. Note: `user_id` links delivery partners to specific users:
+CREATE TABLE stock_levels (
+  id BIGSERIAL PRIMARY KEY,
+  product_id BIGINT REFERENCES products(id) ON DELETE CASCADE,
+  store_id BIGINT REFERENCES stores(id) ON DELETE CASCADE,
+  quantity INTEGER NOT NULL DEFAULT 0,
+  updated_at TIMESTAMPTZ DEFAULT NOW(),
+  UNIQUE(product_id, store_id)
+);
 
-```sql
 CREATE TABLE delivery_partners (
   id BIGSERIAL PRIMARY KEY,
-  user_id BIGINT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
-  name TEXT NOT NULL,
-  rating DECIMAL(3, 1) NOT NULL DEFAULT 0.0,
-  status TEXT NOT NULL CHECK (status IN ('Active', 'Pending Review')),
-  region TEXT NOT NULL,
-  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+  store_id BIGINT REFERENCES stores(id) ON DELETE CASCADE,
+  clerk_user_id TEXT REFERENCES profiles(id) ON DELETE SET NULL UNIQUE,
+  company_name TEXT NOT NULL,
+  contact_info TEXT,
+  rating DECIMAL(3, 1) DEFAULT 4.5,
+  status TEXT DEFAULT 'Active' CHECK (status IN ('Active', 'Pending Review')),
+  region TEXT DEFAULT 'Local Region',
+  created_at TIMESTAMPTZ DEFAULT NOW()
 );
 
--- Create index for faster user-based queries
-CREATE INDEX idx_delivery_partners_user_id ON delivery_partners(user_id);
-```
-
-### 4. Deliveries Table (Optional - for tracking deliveries)
-
-Create a table named `deliveries` with the following structure. Note: `user_id` links deliveries to specific users:
-
-```sql
-CREATE TABLE deliveries (
+CREATE TABLE delivery_orders (
   id BIGSERIAL PRIMARY KEY,
-  user_id BIGINT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
-  partner_id BIGINT REFERENCES delivery_partners(id) ON DELETE SET NULL,
+  manager_id TEXT REFERENCES profiles(id) ON DELETE CASCADE,
+  delivery_partner_id BIGINT REFERENCES delivery_partners(id) ON DELETE SET NULL,
   customer_name TEXT NOT NULL,
-  customer_email TEXT,
+  customer_address TEXT NOT NULL,
   customer_phone TEXT,
-  delivery_address TEXT NOT NULL,
-  status TEXT NOT NULL DEFAULT 'pending' CHECK (status IN ('pending', 'active', 'completed', 'cancelled')),
-  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
-  updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+  status TEXT DEFAULT 'pending' CHECK (status IN ('pending', 'assigned', 'in_transit', 'completed', 'cancelled')),
+  created_at TIMESTAMPTZ DEFAULT NOW(),
+  updated_at TIMESTAMPTZ DEFAULT NOW()
 );
 
--- Create index for faster user-based queries
-CREATE INDEX idx_deliveries_user_id ON deliveries(user_id);
-CREATE INDEX idx_deliveries_partner_id ON deliveries(partner_id);
-```
-
-### 4a. Delivery Items Table (for multiple products per delivery)
-
-Create a table named `delivery_items` to track products and quantities for each delivery:
-
-```sql
-CREATE TABLE delivery_items (
+CREATE TABLE delivery_order_items (
   id BIGSERIAL PRIMARY KEY,
-  delivery_id BIGINT NOT NULL REFERENCES deliveries(id) ON DELETE CASCADE,
-  product_id BIGINT NOT NULL REFERENCES products(id) ON DELETE CASCADE,
-  quantity INTEGER NOT NULL CHECK (quantity > 0),
-  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+  order_id BIGINT REFERENCES delivery_orders(id) ON DELETE CASCADE,
+  product_id BIGINT REFERENCES products(id) ON DELETE CASCADE,
+  quantity INTEGER NOT NULL CHECK (quantity > 0)
 );
 
--- Create indexes for faster queries
-CREATE INDEX idx_delivery_items_delivery_id ON delivery_items(delivery_id);
-CREATE INDEX idx_delivery_items_product_id ON delivery_items(product_id);
-```
-
-### 5. Customers Table (Optional - for customer tracking)
-
-Create a table named `customers` with the following structure. Note: `user_id` links customers to specific users:
-
-```sql
-CREATE TABLE customers (
+CREATE TABLE inventory_movements (
   id BIGSERIAL PRIMARY KEY,
-  user_id BIGINT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
-  name TEXT NOT NULL,
-  email TEXT,
-  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+  product_id BIGINT REFERENCES products(id) ON DELETE CASCADE,
+  from_store_id BIGINT REFERENCES stores(id) ON DELETE SET NULL,
+  to_store_id BIGINT REFERENCES stores(id) ON DELETE SET NULL,
+  delivery_partner_id BIGINT REFERENCES delivery_partners(id) ON DELETE SET NULL,
+  delivery_order_id BIGINT REFERENCES delivery_orders(id) ON DELETE SET NULL,
+  type TEXT CHECK (type IN ('transfer', 'return', 'fulfillment', 'adjustment')),
+  quantity INTEGER NOT NULL,
+  created_at TIMESTAMPTZ DEFAULT NOW()
 );
 
--- Create index for faster user-based queries
-CREATE INDEX idx_customers_user_id ON customers(user_id);
-```
-
-## Row Level Security (RLS)
-
-Enable RLS on all tables and create policies. Since we're using Clerk for authentication, we'll use a function to get the current user's ID from the JWT token.
-
-First, create a function to get the current Clerk user ID from the request:
-
-```sql
--- Function to get current user ID from JWT (Clerk user ID stored in JWT)
--- Note: This assumes Clerk user ID is passed in the request headers or JWT
--- You may need to adjust this based on how Clerk integrates with Supabase
-
--- For now, we'll use a simpler approach: store Clerk user ID in a custom claim
--- You'll need to set up Clerk webhooks to sync users to Supabase, or
--- use a server-side function to get/set the user_id
-
--- Enable RLS
-ALTER TABLE users ENABLE ROW LEVEL SECURITY;
+-- ROW LEVEL SECURITY (RLS)
+ALTER TABLE profiles ENABLE ROW LEVEL SECURITY;
 ALTER TABLE products ENABLE ROW LEVEL SECURITY;
+ALTER TABLE branches ENABLE ROW LEVEL SECURITY;
+ALTER TABLE stores ENABLE ROW LEVEL SECURITY;
+ALTER TABLE stock_levels ENABLE ROW LEVEL SECURITY;
 ALTER TABLE delivery_partners ENABLE ROW LEVEL SECURITY;
-ALTER TABLE deliveries ENABLE ROW LEVEL SECURITY;
-ALTER TABLE customers ENABLE ROW LEVEL SECURITY;
+ALTER TABLE delivery_orders ENABLE ROW LEVEL SECURITY;
+ALTER TABLE delivery_order_items ENABLE ROW LEVEL SECURITY;
+ALTER TABLE inventory_movements ENABLE ROW LEVEL SECURITY;
 
--- Users table policies (users can only see/update their own record)
-CREATE POLICY "Users can view own record" ON users
-  FOR SELECT USING (true); -- Adjust based on your auth setup
+CREATE POLICY "Users can only access their own profile" ON profiles FOR ALL USING ((auth.jwt() ->> 'sub') = id);
+CREATE POLICY "Allow profile creation" ON profiles FOR INSERT WITH CHECK (true);
+CREATE POLICY "Users can only access their own products" ON products FOR ALL USING (user_id = (auth.jwt() ->> 'sub'));
+CREATE POLICY "Users can only access their own branches" ON branches FOR ALL USING (user_id = (auth.jwt() ->> 'sub'));
+CREATE POLICY "Stores access via branch owner" ON stores FOR ALL USING (EXISTS (SELECT 1 FROM branches b WHERE b.id = stores.branch_id AND b.user_id = (auth.jwt() ->> 'sub')));
+CREATE POLICY "Stock access via product owner" ON stock_levels FOR ALL USING (EXISTS (SELECT 1 FROM products p WHERE p.id = stock_levels.product_id AND p.user_id = (auth.jwt() ->> 'sub')));
+CREATE POLICY "Partners access via store owner" ON delivery_partners FOR ALL USING (EXISTS (SELECT 1 FROM stores s JOIN branches b ON s.branch_id = b.id WHERE s.id = delivery_partners.store_id AND b.user_id = (auth.jwt() ->> 'sub')));
+CREATE POLICY "Partners can view their own record" ON delivery_partners FOR SELECT USING (clerk_user_id = (auth.jwt() ->> 'sub'));
+CREATE POLICY "Orders access for managers" ON delivery_orders FOR ALL USING (manager_id = (auth.jwt() ->> 'sub'));
+CREATE POLICY "Orders access for assigned partners" ON delivery_orders FOR SELECT USING (EXISTS (SELECT 1 FROM delivery_partners dp WHERE dp.id = delivery_orders.delivery_partner_id AND dp.clerk_user_id = (auth.jwt() ->> 'sub')));
+CREATE POLICY "Assigned partners can update order status" ON delivery_orders FOR UPDATE USING (EXISTS (SELECT 1 FROM delivery_partners dp WHERE dp.id = delivery_orders.delivery_partner_id AND dp.clerk_user_id = (auth.jwt() ->> 'sub')));
+CREATE POLICY "Order items access via order" ON delivery_order_items FOR ALL USING (EXISTS (SELECT 1 FROM delivery_orders o WHERE o.id = delivery_order_items.order_id AND (o.manager_id = (auth.jwt() ->> 'sub') OR EXISTS (SELECT 1 FROM delivery_partners dp WHERE dp.id = o.delivery_partner_id AND dp.clerk_user_id = (auth.jwt() ->> 'sub')))));
+CREATE POLICY "Movements access via product owner" ON inventory_movements FOR ALL USING (EXISTS (SELECT 1 FROM products p WHERE p.id = inventory_movements.product_id AND p.user_id = (auth.jwt() ->> 'sub')));
 
-CREATE POLICY "Users can insert own record" ON users
-  FOR INSERT WITH CHECK (true); -- Adjust based on your auth setup
+-- ANALYTICS VIEWS
+CREATE OR REPLACE VIEW tenant_daily_analytics AS
+SELECT 
+    p.user_id,
+    DATE(im.created_at) as analytics_date,
+    SUM(CASE WHEN im.type = 'fulfillment' THEN im.quantity * p.sale_price ELSE 0 END) as daily_revenue,
+    SUM(CASE WHEN im.type = 'fulfillment' THEN im.quantity * (p.sale_price * 0.3) ELSE 0 END) as daily_profit -- Estimated 30% margin for demo
+FROM products p
+JOIN inventory_movements im ON p.id = im.product_id
+GROUP BY p.user_id, DATE(im.created_at);
 
--- Products policies (users can only access their own products)
--- Note: These policies assume user_id is set correctly via application logic
--- For stricter security, you'd need to verify the user_id matches the authenticated user
-CREATE POLICY "Users can view own products" ON products
-  FOR SELECT USING (true); -- Will be filtered by user_id in application code
-
-CREATE POLICY "Users can insert own products" ON products
-  FOR INSERT WITH CHECK (true); -- Application ensures correct user_id
-
-CREATE POLICY "Users can update own products" ON products
-  FOR UPDATE USING (true); -- Application ensures correct user_id
-
-CREATE POLICY "Users can delete own products" ON products
-  FOR DELETE USING (true); -- Application ensures correct user_id
-
--- Delivery partners policies
-CREATE POLICY "Users can view own delivery partners" ON delivery_partners
-  FOR SELECT USING (true);
-
-CREATE POLICY "Users can insert own delivery partners" ON delivery_partners
-  FOR INSERT WITH CHECK (true);
-
-CREATE POLICY "Users can update own delivery partners" ON delivery_partners
-  FOR UPDATE USING (true);
-
-CREATE POLICY "Users can delete own delivery partners" ON delivery_partners
-  FOR DELETE USING (true);
-
--- Deliveries policies
-CREATE POLICY "Users can view own deliveries" ON deliveries
-  FOR SELECT USING (true);
-
-CREATE POLICY "Users can insert own deliveries" ON deliveries
-  FOR INSERT WITH CHECK (true);
-
-CREATE POLICY "Users can update own deliveries" ON deliveries
-  FOR UPDATE USING (true);
-
-CREATE POLICY "Users can delete own deliveries" ON deliveries
-  FOR DELETE USING (true);
-
--- Customers policies
-CREATE POLICY "Users can view own customers" ON customers
-  FOR SELECT USING (true);
-
-CREATE POLICY "Users can insert own customers" ON customers
-  FOR INSERT WITH CHECK (true);
-
-CREATE POLICY "Users can update own customers" ON customers
-  FOR UPDATE USING (true);
-
-CREATE POLICY "Users can delete own customers" ON customers
-  FOR DELETE USING (true);
+CREATE OR REPLACE VIEW tenant_stock_alerts AS
+SELECT 
+    p.user_id,
+    p.id as product_id,
+    p.name as product_name,
+    p.sku as product_sku,
+    SUM(sl.quantity) as total_quantity
+FROM products p
+JOIN stock_levels sl ON p.id = sl.product_id
+GROUP BY p.user_id, p.id, p.name, p.sku
+HAVING SUM(sl.quantity) < 50;
 ```
-
-**Important Note:** The RLS policies above are permissive because Clerk authentication happens outside of Supabase. The application code will filter by `user_id` to ensure users only see their own data. For production, consider implementing stricter RLS policies if you integrate Clerk with Supabase Auth.
-
-## Sample Data
-
-**Important:** Before inserting sample data, you must first create a user record. Sample data insertion:
-
-```sql
--- First, insert a user (replace 'clerk_user_id_here' with an actual Clerk user ID)
--- This should typically be done automatically when a user signs up via your application
-INSERT INTO users (clerk_user_id, email) VALUES
-  ('clerk_user_id_here', 'user@example.com')
-  ON CONFLICT (clerk_user_id) DO NOTHING;
-
--- Get the user_id (replace with actual user_id from above)
--- For example, if the user_id is 1:
--- INSERT INTO products (user_id, name, sku, stock, price, last_updated) VALUES
---   (1, 'Wireless Mouse Pro', 'WM-001', 150, 29.99, '2025-10-25'),
---   (1, 'Mechanical Keyboard TKL', 'MK-102', 75, 89.99, '2025-10-28'),
---   (1, '4K Ultra Monitor 32"', 'MU-320', 30, 499.99, '2025-11-01'),
---   (1, 'USB-C Docking Station', 'DS-500', 210, 59.99, '2025-11-03'),
---   (1, 'Noise Cancelling Headset', 'NC-H11', 95, 129.99, '2025-11-05');
-
--- INSERT INTO delivery_partners (user_id, name, rating, status, region) VALUES
---   (1, 'Swift Logistics Inc.', 4.8, 'Active', 'North America'),
---   (1, 'Reliable Couriers Co.', 4.1, 'Pending Review', 'Europe'),
---   (1, 'Global Haulers Ltd.', 4.9, 'Active', 'Asia-Pacific');
-```
-
-**Note:** In production, user records should be created automatically when users sign up via Clerk. The application code will handle associating data with the correct user_id.
-
-## Migration Guide (For Existing Databases)
-
-If you already have data in your Supabase database without user associations, you'll need to migrate it. Here's how:
-
-### Step 1: Add user_id columns to existing tables
-
-```sql
--- Add user_id column to products (if it doesn't exist)
-ALTER TABLE products ADD COLUMN IF NOT EXISTS user_id BIGINT;
-ALTER TABLE products ADD CONSTRAINT fk_products_user_id FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE;
-
--- Add user_id column to delivery_partners (if it doesn't exist)
-ALTER TABLE delivery_partners ADD COLUMN IF NOT EXISTS user_id BIGINT;
-ALTER TABLE delivery_partners ADD CONSTRAINT fk_delivery_partners_user_id FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE;
-
--- Add user_id column to deliveries (if it doesn't exist)
-ALTER TABLE deliveries ADD COLUMN IF NOT EXISTS user_id BIGINT;
-ALTER TABLE deliveries ADD CONSTRAINT fk_deliveries_user_id FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE;
-
--- Add user_id column to customers (if it doesn't exist)
-ALTER TABLE customers ADD COLUMN IF NOT EXISTS user_id BIGINT;
-ALTER TABLE customers ADD CONSTRAINT fk_customers_user_id FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE;
-```
-
-### Step 2: Create indexes
-
-```sql
-CREATE INDEX IF NOT EXISTS idx_products_user_id ON products(user_id);
-CREATE INDEX IF NOT EXISTS idx_delivery_partners_user_id ON delivery_partners(user_id);
-CREATE INDEX IF NOT EXISTS idx_deliveries_user_id ON deliveries(user_id);
-CREATE INDEX IF NOT EXISTS idx_customers_user_id ON customers(user_id);
-```
-
-### Step 3: Update unique constraint on products
-
-```sql
--- Drop old unique constraint on sku if it exists
-ALTER TABLE products DROP CONSTRAINT IF EXISTS products_sku_key;
-
--- Add new unique constraint on (user_id, sku)
-ALTER TABLE products ADD CONSTRAINT products_user_id_sku_unique UNIQUE (user_id, sku);
-```
-
-### Step 4: Migrate existing data
-
-**Important:** Before running this, you need to decide which user should own the existing data. Replace `YOUR_USER_ID` with the actual user_id from the users table.
-
-```sql
--- Update existing products to belong to a specific user
--- Replace YOUR_USER_ID with the actual user_id
-UPDATE products SET user_id = YOUR_USER_ID WHERE user_id IS NULL;
-
--- Update existing delivery_partners
-UPDATE delivery_partners SET user_id = YOUR_USER_ID WHERE user_id IS NULL;
-
--- Update existing deliveries
-UPDATE deliveries SET user_id = YOUR_USER_ID WHERE user_id IS NULL;
-
--- Update existing customers
-UPDATE customers SET user_id = YOUR_USER_ID WHERE user_id IS NULL;
-```
-
-### Step 5: Make user_id NOT NULL
-
-After all data is migrated, make user_id required:
-
-```sql
-ALTER TABLE products ALTER COLUMN user_id SET NOT NULL;
-ALTER TABLE delivery_partners ALTER COLUMN user_id SET NOT NULL;
-ALTER TABLE deliveries ALTER COLUMN user_id SET NOT NULL;
-ALTER TABLE customers ALTER COLUMN user_id SET NOT NULL;
-```
-
-## Environment Variables
-
-Make sure to set the following environment variables in your `.env.local` file:
-
-```
-NEXT_PUBLIC_SUPABASE_URL=your_supabase_project_url
-NEXT_PUBLIC_SUPABASE_ANON_KEY=your_supabase_anon_key
-```
-
-You can find these values in your Supabase project settings under API.
-

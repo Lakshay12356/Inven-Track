@@ -31,6 +31,14 @@ export default function SignInPage() {
         <div className="glass-darker border border-white/20 shadow-2xl shadow-blue-500/5 rounded-[2.5rem] overflow-hidden transition-all duration-700 hover:border-white/30 w-full">
           <SignIn 
             appearance={{
+              variables: {
+                colorPrimary: '#00BFFF',
+                colorBackground: '#0a0e1f',
+                colorText: '#ffffff', // Forced white
+                colorInputBackground: 'rgba(255, 255, 255, 0.05)',
+                colorInputText: '#ffffff', // Forced white
+                colorTextSecondary: 'rgba(255, 255, 255, 0.5)',
+              },
               elements: {
                 rootBox: "w-full",
                 card: "w-full shadow-none bg-transparent p-6 sm:p-10 border-none",
@@ -79,4 +87,3 @@ export default function SignInPage() {
     </div>
   );
 }
-
