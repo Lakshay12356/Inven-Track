@@ -24,7 +24,6 @@ export interface DeliveryOrderItem {
 }
 
 export interface CreateOrderData {
-  managerId: string;
   partnerId?: string;
   customerName: string;
   customerAddress: string;
@@ -51,17 +50,18 @@ export const createDeliveryOrder = async (
   return response.json();
 };
 
+// H-03: clerkUserId removed from body — server derives identity from auth()
 export const updateOrderStatus = async (
   orderId: string,
   status: DeliveryOrder['status'],
-  clerkUserId: string
+  _clerkUserId?: string
 ): Promise<DeliveryOrder> => {
   const response = await fetch('/api/delivery-orders/status', {
     method: 'PATCH',
     headers: {
       'Content-Type': 'application/json',
     },
-    body: JSON.stringify({ orderId, status, clerkUserId }),
+    body: JSON.stringify({ orderId, status }),
   });
 
   if (!response.ok) {
@@ -79,7 +79,7 @@ export const getDeliveryOrders = async (
   const supabase = createClient();
   const userId = await getOrCreateUser(clerkUserId, email);
 
-  // First, if this user is a delivery partner, find their internal partner ID
+  // Check if this user is a delivery partner
   const { data: partnerData } = await supabase
     .from('delivery_partners')
     .select('id')
@@ -94,10 +94,10 @@ export const getDeliveryOrders = async (
     `);
 
   if (partnerData?.id) {
-    // Show orders where they are the manager OR the assigned partner
+    // Partner sees orders where they are manager OR assigned partner
     query = query.or(`manager_id.eq.${userId},delivery_partner_id.eq.${partnerData.id}`);
   } else {
-    // Show orders where they are the manager
+    // Manager sees only their own orders
     query = query.eq('manager_id', userId);
   }
 
@@ -109,47 +109,4 @@ export const getDeliveryOrders = async (
   }
 
   return (data || []) as DeliveryOrder[];
-};
-
-// Backwards compatibility for inventory movements
-export interface InventoryMovement {
-  id: string;
-  product_id: string;
-  from_store_id: string | null;
-  to_store_id: string | null;
-  delivery_partner_id: string | null;
-  delivery_order_id: string | null;
-  type: 'transfer' | 'return' | 'fulfillment' | 'adjustment';
-  quantity: number;
-  created_at: string;
-}
-
-export const getMovements = async (
-  clerkUserId: string,
-  email?: string
-): Promise<InventoryMovement[]> => {
-  const supabase = createClient();
-  const userId = await getOrCreateUser(clerkUserId, email);
-
-  const { data: userProducts } = await supabase
-    .from('products')
-    .select('id')
-    .eq('user_id', userId);
-
-  if (!userProducts || userProducts.length === 0) return [];
-
-  const productIds = userProducts.map(p => p.id);
-
-  const { data, error } = await supabase
-    .from('inventory_movements')
-    .select('*')
-    .in('product_id', productIds)
-    .order('created_at', { ascending: false });
-
-  if (error) {
-    console.error('Error fetching movements:', error);
-    throw new Error(`Failed to fetch movements: ${error.message}`);
-  }
-
-  return (data || []) as InventoryMovement[];
 };

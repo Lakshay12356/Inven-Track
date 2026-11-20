@@ -4,7 +4,7 @@
 import React from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { LayoutDashboard, Package, Truck, User, Store, X } from 'lucide-react';
+import { LayoutDashboard, Package, User, Boxes, X } from 'lucide-react';
 import { NavItem } from '@/app/types';
 
 import { useUser } from '@clerk/nextjs';
@@ -28,9 +28,7 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen = false, onClose }) => {
   
   const allNavItems: NavItem[] = [
     { name: 'Dashboard', icon: LayoutDashboard, path: '/dashboard' },
-    { name: 'Inventory', icon: Package, path: '/inventory', role: 'manager' },
-    { name: 'Delivery', icon: Truck, path: '/delivery', role: 'manager' },
-    { name: 'Branches', icon: Store, path: '/branches', role: 'manager' },
+    { name: 'Warehouse', icon: Boxes, path: '/warehouse', role: 'manager' },
     { name: 'Profile', icon: User, path: '/profile' },
   ];
 
@@ -47,7 +45,7 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen = false, onClose }) => {
     <>
       <div className={`
         fixed lg:static inset-y-0 left-0 z-50
-        flex flex-col w-[260px] min-h-screen p-5
+        flex flex-col w-[260px] h-screen overflow-y-auto p-5
         transform transition-all duration-300 ease-in-out
 
         /* Light mode */
@@ -123,10 +121,23 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen = false, onClose }) => {
           })}
         </nav>
 
-        {/* Bottom section */}
-        <div className="mt-auto pt-6 border-t border-white/20 dark:border-white/[0.04]">
-          <div className="px-3 py-2">
-            <p className="text-[10px] font-medium text-gray-400 dark:text-white/15 uppercase tracking-wider">
+        {/* Bottom: user identity */}
+        <div className="mt-auto pt-4 border-t border-white/20 dark:border-white/[0.04]">
+          {user && (
+            <div className="flex items-center gap-3 px-3 py-2.5 rounded-xl hover:bg-white/30 dark:hover:bg-white/[0.03] transition-all cursor-default">
+              <div className="w-7 h-7 rounded-lg bg-gradient-to-br from-blue-400 to-indigo-500 flex items-center justify-center flex-shrink-0 text-white text-xs font-bold shadow-sm">
+                {(user.firstName?.[0] || user.emailAddresses?.[0]?.emailAddress?.[0] || 'U').toUpperCase()}
+              </div>
+              <div className="min-w-0 flex-1">
+                <p className="text-xs font-semibold text-gray-700 dark:text-white/70 truncate leading-none">
+                  {user.firstName ? `${user.firstName} ${user.lastName || ''}`.trim() : 'Account'}
+                </p>
+                <p className="text-[10px] text-gray-400 dark:text-white/25 truncate mt-0.5 capitalize">{role || 'Loading…'}</p>
+              </div>
+            </div>
+          )}
+          <div className="px-3 py-2 mt-1">
+            <p className="text-[10px] font-medium text-gray-300 dark:text-white/10 uppercase tracking-wider">
               Inven Track v1.0
             </p>
           </div>

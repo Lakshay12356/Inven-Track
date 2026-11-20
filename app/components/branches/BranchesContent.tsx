@@ -9,6 +9,7 @@ const BranchesContent: React.FC = () => {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [newBranch, setNewBranch] = useState({ name: '', location: '' });
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [selectedBranch, setSelectedBranch] = useState<any>(null);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -102,7 +103,10 @@ const BranchesContent: React.FC = () => {
                     {branch.location || 'No location set'}
                   </div>
                   <div className="mt-5 pt-4 border-t border-gray-200/20 dark:border-white/[0.04] flex justify-between items-center">
-                    <button className="text-indigo-500 dark:text-indigo-400 hover:text-indigo-600 font-medium text-xs transition-colors">
+                    <button 
+                      onClick={() => setSelectedBranch(branch)}
+                      className="text-indigo-500 dark:text-indigo-400 hover:text-indigo-600 font-medium text-xs transition-colors"
+                    >
                       View Details
                     </button>
                     <span className="text-[10px] text-gray-400 dark:text-white/15 font-mono">ID: {branch.id}</span>
@@ -158,6 +162,58 @@ const BranchesContent: React.FC = () => {
                 </button>
               </div>
             </form>
+          </div>
+        </div>
+      )}
+      {/* Branch Details Modal */}
+      {selectedBranch && (
+        <div className="fixed inset-0 bg-black/20 dark:bg-black/60 backdrop-blur-md flex justify-center items-center z-50 p-4">
+          <div className="bg-white/60 dark:bg-white/[0.05] backdrop-blur-3xl p-6 sm:p-8 rounded-2xl shadow-[0_24px_80px_rgba(0,0,0,0.1)] dark:shadow-[0_24px_80px_rgba(0,0,0,0.6),inset_0_1px_0_rgba(255,255,255,0.08)] w-full max-w-lg border border-white/50 dark:border-white/[0.1] dark:border-t-white/[0.18]">
+            <div className="flex justify-between items-start mb-6">
+              <div>
+                <h2 className="text-2xl font-bold text-gray-800 dark:text-white/90">{selectedBranch.name}</h2>
+                <p className="text-gray-500 dark:text-white/35 text-sm mt-1 flex items-center gap-2">
+                    <MapPin className="w-4 h-4" />
+                    {selectedBranch.location || 'No location set'}
+                </p>
+              </div>
+              <button 
+                onClick={() => setSelectedBranch(null)}
+                className="p-2 bg-white/50 dark:bg-white/[0.05] rounded-xl text-gray-400 hover:text-gray-600 dark:hover:text-white/60 transition-all"
+              >
+                <Plus className="w-5 h-5 rotate-45" />
+              </button>
+            </div>
+
+            <div className="space-y-6">
+                <div className="bg-white/40 dark:bg-white/[0.02] p-5 rounded-xl border border-white/40 dark:border-white/[0.05]">
+                    <h3 className="text-xs font-bold text-gray-400 dark:text-white/20 uppercase tracking-widest mb-4">Quick Stats</h3>
+                    <div className="grid grid-cols-2 gap-4">
+                        <div>
+                            <p className="text-[10px] text-gray-400 dark:text-white/20 uppercase font-bold tracking-tighter">Status</p>
+                            <p className="text-sm font-bold text-emerald-500 mt-0.5">Active</p>
+                        </div>
+                        <div>
+                            <p className="text-[10px] text-gray-400 dark:text-white/20 uppercase font-bold tracking-tighter">Branch ID</p>
+                            <p className="text-sm font-mono text-gray-600 dark:text-white/50 mt-0.5">{selectedBranch.id}</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div className="space-y-3">
+                    <h3 className="text-xs font-bold text-gray-400 dark:text-white/20 uppercase tracking-widest">Branch Information</h3>
+                    <p className="text-sm text-gray-600 dark:text-white/60 leading-relaxed">
+                        This branch is currently operating at full capacity. All inventory movements are tracked in real-time through the central dashboard.
+                    </p>
+                </div>
+            </div>
+
+            <button
+              onClick={() => setSelectedBranch(null)}
+              className="w-full mt-8 py-3 bg-white/40 dark:bg-white/[0.05] border border-white/40 dark:border-white/[0.08] rounded-xl text-gray-500 dark:text-white/40 hover:bg-white/60 dark:hover:bg-white/[0.08] transition-all text-sm font-medium"
+            >
+              Close Details
+            </button>
           </div>
         </div>
       )}

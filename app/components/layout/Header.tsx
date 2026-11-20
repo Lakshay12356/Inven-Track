@@ -1,10 +1,11 @@
 'use client';
 
 import React from 'react';
-import { Bell, User, LogOut, Sun, Moon, Menu, Search } from 'lucide-react';
+import { User, LogOut, Sun, Moon, Menu, Search } from 'lucide-react';
 import { useClerk } from '@clerk/nextjs';
 import { useRouter, usePathname } from 'next/navigation';
 import { useTheme } from '@/app/contexts/ThemeContext';
+import NotificationDropdown from './NotificationDropdown';
 
 interface HeaderProps {
   onMenuClick?: () => void;
@@ -21,7 +22,6 @@ const Header: React.FC<HeaderProps> = ({ onMenuClick }) => {
     router.push('/sign-in');
   };
 
-  // Get page title from pathname
   const getPageTitle = () => {
     const path = pathname.split('/').filter(Boolean)[0] || 'dashboard';
     return path.charAt(0).toUpperCase() + path.slice(1);
@@ -76,15 +76,11 @@ const Header: React.FC<HeaderProps> = ({ onMenuClick }) => {
                 <Sun className="w-[18px] h-[18px]" />
               )}
             </button>
-            <button 
-              className="p-2.5 rounded-xl text-gray-500 dark:text-white/40 hover:bg-white/50 dark:hover:bg-white/[0.06] hover:text-gray-700 dark:hover:text-white/70 transition-all duration-200 hover:scale-105 relative"
-              aria-label="Notifications"
-            >
-              <Bell className="w-[18px] h-[18px]" />
-              <span className="absolute top-2 right-2 w-2 h-2 bg-red-500 rounded-full border-2 border-white/80 dark:border-[#0d1130] shadow-[0_0_6px_rgba(239,68,68,0.5)]" />
-            </button>
-            <button 
-              className="p-2.5 rounded-xl text-gray-500 dark:text-white/40 hover:bg-white/50 dark:hover:bg-white/[0.06] hover:text-gray-700 dark:hover:text-white/70 transition-all duration-200 hover:scale-105" 
+
+            <NotificationDropdown />
+
+            <button
+              className="p-2.5 rounded-xl text-gray-500 dark:text-white/40 hover:bg-white/50 dark:hover:bg-white/[0.06] hover:text-gray-700 dark:hover:text-white/70 transition-all duration-200 hover:scale-105"
               onClick={() => router.push('/profile')}
               aria-label="Profile"
             >

@@ -6,13 +6,14 @@ import Header from './Header';
 
 interface AppLayoutProps {
   children: React.ReactNode;
+  fullHeight?: boolean;
 }
 
-const AppLayout: React.FC<AppLayoutProps> = ({ children }) => {
+const AppLayout: React.FC<AppLayoutProps> = ({ children, fullHeight = false }) => {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
 
   return (
-    <div className="flex min-h-screen relative">
+    <div className="flex h-screen overflow-hidden relative">
       {/* Ambient background orbs — vibrant color pools that bleed through glass */}
       <div className="fixed inset-0 overflow-hidden pointer-events-none z-0" aria-hidden="true">
         {/* Light mode orbs */}
@@ -49,14 +50,18 @@ const AppLayout: React.FC<AppLayoutProps> = ({ children }) => {
         onClose={() => setIsSidebarOpen(false)}
       />
       
-      <main className="flex-1 overflow-x-hidden overflow-y-auto w-full lg:w-auto relative z-[1]">
-        <Header 
+      <main className={`flex-1 min-w-0 h-screen overflow-x-hidden relative z-[1] ${fullHeight ? 'overflow-hidden flex flex-col' : 'overflow-y-auto'}`}>
+        <Header
           onMenuClick={() => setIsSidebarOpen(!isSidebarOpen)}
         />
-        
-        <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pb-12">
-          {children}
-        </section>
+
+        {fullHeight ? (
+          <div className="flex-1 min-h-0">{children}</div>
+        ) : (
+          <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pb-12">
+            {children}
+          </section>
+        )}
       </main>
     </div>
   );

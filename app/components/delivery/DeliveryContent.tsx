@@ -31,14 +31,12 @@ const DeliveryContent: React.FC<DeliveryContentProps> = ({
   createOrder,
   refreshProducts,
   refreshDeliveries,
-  onUpdateDeliveryStatus,
 }) => {
   const { user } = useUser();
   const [assignmentMessage, setAssignmentMessage] = useState('');
   const [isPartnerModalOpen, setIsPartnerModalOpen] = useState(false);
   const [isAssignModalOpen, setIsAssignModalOpen] = useState(false);
   const [isRefreshingDeliveries, setIsRefreshingDeliveries] = useState(false);
-  const [updatingOrderId, setUpdatingOrderId] = useState<string | number | null>(null);
 
   const clearMessageAfterDelay = useCallback(() => {
     setTimeout(() => setAssignmentMessage(''), 5000);
@@ -84,22 +82,6 @@ const DeliveryContent: React.FC<DeliveryContentProps> = ({
       setAssignmentMessage(message);
       clearMessageAfterDelay();
       throw err instanceof Error ? err : new Error(message);
-    }
-  };
-
-  const handleStatusUpdate = async (orderId: string | number, status: string) => {
-    try {
-      setUpdatingOrderId(orderId);
-      await onUpdateDeliveryStatus(orderId, status);
-      await refreshDeliveries();
-      setAssignmentMessage(`Successfully updated order #${orderId} status to ${status}.`);
-      clearMessageAfterDelay();
-    } catch (err) {
-      const errorMessage = err instanceof Error ? err.message : 'Failed to update status';
-      setAssignmentMessage(`Error: ${errorMessage}`);
-      clearMessageAfterDelay();
-    } finally {
-      setUpdatingOrderId(null);
     }
   };
 
@@ -236,27 +218,6 @@ const DeliveryContent: React.FC<DeliveryContentProps> = ({
                       </div>
                     </div>
                   </div>
-
-                  <div className="flex flex-wrap items-center gap-2">
-                    {order.status === 'assigned' && (
-                      <button
-                        onClick={() => handleStatusUpdate(order.id, 'in_transit')}
-                        disabled={updatingOrderId === order.id}
-                        className="px-4 py-2 bg-blue-500 text-white text-sm font-medium rounded-xl shadow-md shadow-blue-500/15 hover:bg-blue-600 transition-all disabled:opacity-50"
-                      >
-                        Mark In Transit
-                      </button>
-                    )}
-                    {order.status === 'in_transit' && (
-                      <button
-                        onClick={() => handleStatusUpdate(order.id, 'completed')}
-                        disabled={updatingOrderId === order.id}
-                        className="px-4 py-2 bg-emerald-500 text-white text-sm font-medium rounded-xl shadow-md shadow-emerald-500/15 hover:bg-emerald-600 transition-all disabled:opacity-50"
-                      >
-                        Mark Completed
-                      </button>
-                    )}
-                  </div>
                 </div>
 
                 {/* Order Items */}
@@ -322,9 +283,6 @@ const DeliveryContent: React.FC<DeliveryContentProps> = ({
                 >
                   {partner.status}
                 </span>
-                <button className="text-indigo-500 dark:text-indigo-400 hover:text-indigo-600 dark:hover:text-indigo-300 text-xs font-medium transition-colors duration-150">
-                  View Details
-                </button>
               </div>
             </div>
           ))}

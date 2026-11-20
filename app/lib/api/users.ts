@@ -4,12 +4,16 @@ import { createClient } from '@/app/lib/supabase-client';
 
 /**
  * Syncs the Clerk user identity to the Supabase 'profiles' table.
- * Returns the Clerk User ID (UUID) for use in other tables.
+ * Auto-provisions a default branch and store for new managers.
  */
-export const getOrCreateUser = async (clerkUserId: string, email?: string): Promise<string> => {
+export const getOrCreateUser = async (
+  clerkUserId: string,
+  email?: string,
+  companyName?: string,
+  role: 'manager' | 'delivery_partner' = 'delivery_partner'
+): Promise<string> => {
   const supabase = createClient();
-  
-  // First check if the user already exists (e.g. created by a manager as a delivery partner)
+
   const { data: existingProfile } = await supabase
     .from('profiles')
     .select('id')
@@ -20,13 +24,13 @@ export const getOrCreateUser = async (clerkUserId: string, email?: string): Prom
     return existingProfile.id;
   }
 
-  // If not, create them as a manager (default for direct sign-ups)
   const { data: profile, error: syncError } = await supabase
     .from('profiles')
-    .insert({ 
-      id: clerkUserId, 
+    .insert({
+      id: clerkUserId,
       email,
-      role: 'manager' 
+      role,
+      company_name: companyName || null,
     })
     .select('id')
     .single();
@@ -43,7 +47,7 @@ export const getOrCreateUser = async (clerkUserId: string, email?: string): Prom
     throw new Error('Identity sync failed: No profile data returned');
   }
 
-  // Auto-provision a default branch and store if this is a brand new account!
+  // Auto-provision a default branch and store for new managers
   try {
     const { data: branches } = await supabase.from('branches').select('id').eq('user_id', profile.id).limit(1);
     if (!branches || branches.length === 0) {
@@ -52,7 +56,7 @@ export const getOrCreateUser = async (clerkUserId: string, email?: string): Prom
         .insert({ user_id: profile.id, name: 'HQ Logistics', location: 'Headquarters' })
         .select('id')
         .single();
-      
+
       if (newBranch) {
         await supabase
           .from('stores')
@@ -75,7 +79,7 @@ export const getUserRole = async (clerkUserId: string): Promise<'manager' | 'del
     .single();
 
   if (error || !data) {
-    return 'manager'; // Fallback
+    return 'manager';
   }
 
   return data.role as 'manager' | 'delivery_partner';

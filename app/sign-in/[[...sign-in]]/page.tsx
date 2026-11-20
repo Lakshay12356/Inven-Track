@@ -1,87 +1,115 @@
 import { SignIn } from "@clerk/nextjs";
-import { Package } from "lucide-react";
+import { Package, TrendingUp, Truck, BarChart3 } from "lucide-react";
 
 export default function SignInPage() {
   return (
-    <div className="flex h-screen items-center justify-center bg-[#020617] px-4 overflow-hidden relative font-sans">
-      {/* Dynamic Background Blobs */}
-      <div className="absolute top-[-10%] left-[-10%] w-[40%] h-[40%] bg-blue-600/20 rounded-full blur-[120px] animate-blob"></div>
-      <div className="absolute bottom-[-10%] right-[-10%] w-[40%] h-[40%] bg-cyan-600/20 rounded-full blur-[120px] animate-blob animation-delay-2000"></div>
-      <div className="absolute top-[20%] right-[10%] w-[30%] h-[30%] bg-indigo-600/10 rounded-full blur-[100px] animate-blob animation-delay-4000"></div>
-      
-      {/* Subtle grid pattern */}
-      <div className="absolute inset-0 z-0 opacity-[0.05] pointer-events-none">
-        <svg width="100%" height="100%" fill="none" xmlns="http://www.w3.org/2000/svg">
-          <pattern id="grid-pattern-dark" width="60" height="60" patternUnits="userSpaceOnUse">
-            <path d="M 60 0 L 0 0 0 60" fill="none" stroke="white" strokeWidth="0.5" />
-          </pattern>
-          <rect width="100%" height="100%" fill="url(#grid-pattern-dark)" />
-        </svg>
-      </div>
-
-      <div className="w-full max-w-md relative z-10 scale-90 sm:scale-100">
-        <div className="flex flex-col items-center mb-6">
-          <div className="p-4 bg-white/5 backdrop-blur-3xl rounded-3xl border border-white/10 mb-6 group transition-all duration-500 hover:scale-110 hover:shadow-2xl hover:shadow-blue-500/20">
-            <Package className="w-12 h-12 text-[#00BFFF] drop-shadow-[0_0_15px_rgba(0,191,255,0.4)]" />
-          </div>
-          <h1 className="text-4xl font-black text-white tracking-tight mb-2">Inven Track</h1>
-          <p className="text-xs font-bold text-blue-400/80 uppercase tracking-[0.4em]">Global Access Portal</p>
+    <div className="min-h-screen bg-[#0c0f1a] flex">
+      {/* Left branding panel — hidden on mobile */}
+      <div className="hidden lg:flex flex-col justify-between w-[480px] flex-shrink-0 relative overflow-hidden bg-gradient-to-br from-[#0f1629] to-[#0c0f1a] border-r border-white/[0.06] p-12">
+        {/* Subtle radial glow */}
+        <div className="absolute top-0 left-0 w-full h-full pointer-events-none">
+          <div className="absolute top-[-20%] left-[-20%] w-[60%] h-[60%] bg-blue-600/10 rounded-full blur-[100px]" />
+          <div className="absolute bottom-[10%] right-[-10%] w-[40%] h-[40%] bg-indigo-600/8 rounded-full blur-[80px]" />
         </div>
 
-        <div className="glass-darker border border-white/20 shadow-2xl shadow-blue-500/5 rounded-[2.5rem] overflow-hidden transition-all duration-700 hover:border-white/30 w-full">
-          <SignIn 
+        {/* Logo */}
+        <div className="relative z-10">
+          <div className="flex items-center gap-3 mb-16">
+            <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center shadow-lg shadow-blue-500/25">
+              <Package className="w-5 h-5 text-white" />
+            </div>
+            <span className="text-white font-semibold text-lg tracking-tight">Inven Track</span>
+          </div>
+
+          <div className="space-y-3 mb-12">
+            <h2 className="text-3xl font-bold text-white leading-tight tracking-tight">
+              Inventory management<br />
+              <span className="text-white/40">built for your team.</span>
+            </h2>
+            <p className="text-sm text-white/40 leading-relaxed max-w-xs">
+              Track products, coordinate deliveries, and manage branches — all in one place.
+            </p>
+          </div>
+
+          <div className="space-y-4">
+            {[
+              { icon: BarChart3, label: "Real-time stock visibility", desc: "Know exactly what's in stock across every branch" },
+              { icon: Truck, label: "Delivery partner management", desc: "Assign orders and track them to the door" },
+              { icon: TrendingUp, label: "Profit margin tracking", desc: "Buy price vs. sell price on every SKU" },
+            ].map(({ icon: Icon, label, desc }) => (
+              <div key={label} className="flex items-start gap-3.5">
+                <div className="w-8 h-8 rounded-lg bg-white/[0.05] border border-white/[0.08] flex items-center justify-center flex-shrink-0 mt-0.5">
+                  <Icon className="w-4 h-4 text-blue-400" />
+                </div>
+                <div>
+                  <p className="text-sm font-medium text-white/80">{label}</p>
+                  <p className="text-xs text-white/30 mt-0.5 leading-relaxed">{desc}</p>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* Bottom */}
+        <div className="relative z-10">
+          <p className="text-xs text-white/20">© 2025 Inven Track. All rights reserved.</p>
+        </div>
+      </div>
+
+      {/* Right: auth form */}
+      <div className="flex-1 flex items-center justify-center p-6 sm:p-10">
+        <div className="w-full max-w-[400px]">
+          {/* Mobile logo */}
+          <div className="flex items-center gap-2.5 mb-8 lg:hidden">
+            <div className="w-8 h-8 rounded-xl bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center">
+              <Package className="w-4 h-4 text-white" />
+            </div>
+            <span className="text-white font-semibold">Inven Track</span>
+          </div>
+
+          <div className="mb-8">
+            <h1 className="text-2xl font-bold text-white tracking-tight mb-1.5">Welcome back</h1>
+            <p className="text-sm text-white/40">Sign in to your workspace to continue.</p>
+          </div>
+
+          <SignIn
             appearance={{
               variables: {
-                colorPrimary: '#00BFFF',
-                colorBackground: '#0a0e1f',
-                colorText: '#ffffff', // Forced white
-                colorInputBackground: 'rgba(255, 255, 255, 0.05)',
-                colorInputText: '#ffffff', // Forced white
-                colorTextSecondary: 'rgba(255, 255, 255, 0.5)',
+                colorPrimary: '#3b82f6',
+                colorBackground: '#0c0f1a',
+                colorText: '#ffffff',
+                colorInputBackground: 'rgba(255,255,255,0.04)',
+                colorInputText: '#ffffff',
+                colorTextSecondary: 'rgba(255,255,255,0.4)',
               },
               elements: {
                 rootBox: "w-full",
-                card: "w-full shadow-none bg-transparent p-6 sm:p-10 border-none",
+                card: "w-full shadow-none bg-transparent p-0 border-none",
                 main: "p-0",
-                header: "p-0 mb-8",
-                headerTitle: "text-3xl font-black text-white tracking-tight mb-3 text-center",
-                headerSubtitle: "text-sm font-medium text-gray-400 text-center",
-                formButtonPrimary: "bg-gradient-to-r from-[#00BFFF] to-[#0080FF] hover:from-[#009FD4] hover:to-[#0066CC] text-sm font-bold uppercase tracking-widest h-14 rounded-2xl shadow-2xl shadow-blue-500/30 transition-all active:scale-[0.98] border-none",
-                socialButtonsBlockButton: "bg-white/5 border-white/10 hover:bg-white/10 hover:border-white/20 transition-all h-14 rounded-2xl font-semibold text-white shadow-sm mb-4",
-                socialButtonsBlockButtonText: "text-white font-medium",
-                socialButtonsBlockButtonArrow: "text-white/40",
-                footer: "bg-transparent p-0 mt-8",
+                header: "hidden",
+                formButtonPrimary: "bg-blue-600 hover:bg-blue-500 text-sm font-semibold h-11 rounded-xl shadow-lg shadow-blue-600/20 transition-all active:scale-[0.99] border-none",
+                socialButtonsBlockButton: "bg-white/[0.04] border border-white/[0.08] hover:bg-white/[0.08] hover:border-white/[0.14] transition-all h-11 rounded-xl font-medium text-white/80 text-sm",
+                socialButtonsBlockButtonText: "text-white/80 font-medium text-sm",
+                footer: "bg-transparent p-0 mt-6",
                 footerAction: "bg-transparent",
-                footerActionLink: "text-[#00BFFF] hover:text-[#00BFFF]/80 font-bold transition-all underline decoration-2 underline-offset-4",
-                footerActionText: "text-gray-400 font-medium",
-                formFieldLabel: "text-[11px] font-bold text-gray-400 uppercase tracking-widest mb-2.5 ml-1",
-                formFieldInput: "bg-white/5 border-white/10 focus:bg-white/10 focus:border-[#00BFFF] focus:ring-[#00BFFF]/20 h-14 rounded-2xl text-white text-base font-medium px-5 transition-all outline-none",
-                dividerLine: "bg-white/10 h-[1px]",
-                dividerText: "text-[11px] font-bold text-gray-500 uppercase tracking-[0.2em] bg-transparent",
-                identityPreviewText: "font-semibold text-white",
-                identityPreviewEditButtonIcon: "text-[#00BFFF]",
-                formFieldAction: "text-[11px] font-bold text-[#00BFFF] hover:text-[#00BFFF]/80 uppercase tracking-wider",
-                formHeaderTitle: "hidden",
-                formHeaderSubtitle: "hidden",
-                alert: "bg-red-500/10 border-red-500/20 text-red-400 rounded-2xl",
+                footerActionLink: "text-blue-400 hover:text-blue-300 font-semibold transition-colors",
+                footerActionText: "text-white/35 text-sm",
+                formFieldLabel: "text-xs font-semibold text-white/40 uppercase tracking-wider mb-1.5",
+                formFieldInput: "bg-white/[0.04] border border-white/[0.08] focus:bg-white/[0.07] focus:border-blue-500/50 focus:ring-0 h-11 rounded-xl text-white text-sm px-4 transition-all outline-none placeholder-white/20",
+                dividerLine: "bg-white/[0.08]",
+                dividerText: "text-xs text-white/25 uppercase tracking-widest",
+                identityPreviewText: "font-medium text-white/80",
+                identityPreviewEditButtonIcon: "text-blue-400",
+                formFieldAction: "text-xs font-semibold text-blue-400 hover:text-blue-300",
+                alert: "bg-red-500/10 border border-red-500/20 text-red-400 rounded-xl text-sm",
+                formResendCodeLink: "text-blue-400 hover:text-blue-300",
               },
               layout: {
-                shimmer: true,
-                logoPlacement: "none"
+                shimmer: false,
+                logoPlacement: "none",
               }
             }}
           />
-        </div>
-        
-        <div className="mt-8 text-center flex flex-col items-center gap-3">
-          <div className="flex items-center gap-4 opacity-20">
-            <span className="h-[1px] w-12 bg-gradient-to-r from-transparent to-white"></span>
-            <p className="text-[10px] font-bold text-white uppercase tracking-[0.5em]">Inventory OS v2.0</p>
-            <span className="h-[1px] w-12 bg-gradient-to-l from-transparent to-white"></span>
-          </div>
-          <p className="text-[10px] font-medium text-gray-600 max-w-[200px] leading-relaxed">
-            Secured with end-to-end industrial encryption protocols.
-          </p>
         </div>
       </div>
     </div>

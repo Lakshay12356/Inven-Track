@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { Truck, CheckCircle2, Package, MapPin, Phone, User, Clock, Loader2, Star, Navigation } from 'lucide-react';
+import { Truck, CheckCircle2, Package, MapPin, Phone, User, Clock, Loader2, Navigation } from 'lucide-react';
 import { useUser } from '@clerk/nextjs';
 import { DeliveryOrder, getDeliveryOrders, updateOrderStatus } from '@/app/lib/api/deliveries';
 
@@ -34,7 +34,7 @@ const DeliveryPartnerDashboard: React.FC = () => {
     try {
       setUpdatingOrderId(orderId);
       await updateOrderStatus(orderId, status as any, user.id);
-      await fetchOrders(); // Refresh
+      await fetchOrders();
     } catch (err) {
       console.error('Error updating status:', err);
     } finally {
@@ -69,10 +69,6 @@ const DeliveryPartnerDashboard: React.FC = () => {
         <div>
           <h1 className="text-2xl sm:text-3xl font-bold text-gray-800 dark:text-white">Partner Dashboard</h1>
           <p className="text-gray-500 dark:text-white/35 mt-1 text-sm">Manage your active deliveries and performance</p>
-        </div>
-        <div className="flex items-center gap-3 bg-amber-50/60 dark:bg-amber-500/10 px-5 py-2.5 rounded-xl border border-amber-200/30 dark:border-amber-500/20 shadow-sm">
-          <Star className="w-4 h-4 text-amber-500 fill-amber-500" />
-          <span className="text-sm font-bold text-amber-700 dark:text-amber-300">4.9 Rating</span>
         </div>
       </header>
 
@@ -157,7 +153,7 @@ const DeliveryPartnerDashboard: React.FC = () => {
                 </div>
 
                 <div className="p-4 bg-white/20 dark:bg-white/[0.02] border-t border-gray-200/20 dark:border-white/[0.04] flex gap-2">
-                  {order.status === 'assigned' ? (
+                  {order.status === 'assigned' && (
                     <button
                       onClick={() => handleStatusUpdate(order.id, 'in_transit')}
                       disabled={updatingOrderId === order.id}
@@ -166,7 +162,8 @@ const DeliveryPartnerDashboard: React.FC = () => {
                       {updatingOrderId === order.id ? <Loader2 className="w-4 h-4 animate-spin" /> : <Navigation className="w-4 h-4" />}
                       Start Delivery
                     </button>
-                  ) : (
+                  )}
+                  {order.status === 'in_transit' && (
                     <button
                       onClick={() => handleStatusUpdate(order.id, 'completed')}
                       disabled={updatingOrderId === order.id}
@@ -183,7 +180,57 @@ const DeliveryPartnerDashboard: React.FC = () => {
         )}
       </section>
 
-      {/* Completed Section Link (Optional) */}
+      {/* Completed Orders History */}
+      {completedOrders.length > 0 && (
+        <section className="space-y-4 animate-fade-in-up" style={{ animationDelay: '0.2s' }}>
+          <div className="flex items-center gap-3">
+            <CheckCircle2 className="w-5 h-5 text-emerald-500 dark:text-emerald-400" />
+            <h2 className="text-lg font-bold text-gray-800 dark:text-white/90">Completed Deliveries</h2>
+            <span className="text-xs text-gray-400 dark:text-white/20">({completedOrders.length})</span>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            {completedOrders.map(order => (
+              <div key={order.id} className="bg-white/30 dark:bg-white/[0.03] backdrop-blur-2xl dark:backdrop-blur-3xl rounded-2xl border border-white/40 dark:border-white/[0.06] shadow-sm p-5 opacity-75">
+                <div className="flex justify-between items-start mb-3">
+                  <span className={`px-2.5 py-1 text-[10px] font-bold uppercase tracking-wider rounded-full border ${getStatusColor(order.status)}`}>
+                    completed
+                  </span>
+                  <span className="text-xs text-gray-400 dark:text-white/20 font-mono">#{order.id}</span>
+                </div>
+
+                <div className="space-y-2">
+                  <div className="flex items-center gap-2">
+                    <User className="w-3.5 h-3.5 text-gray-400 dark:text-white/25" />
+                    <p className="text-sm font-medium text-gray-700 dark:text-white/70">{order.customer_name}</p>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <MapPin className="w-3.5 h-3.5 text-gray-400 dark:text-white/25" />
+                    <p className="text-xs text-gray-400 dark:text-white/25 line-clamp-1">{order.customer_address}</p>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <Clock className="w-3.5 h-3.5 text-gray-400 dark:text-white/25" />
+                    <p className="text-xs text-gray-400 dark:text-white/25">{new Date(order.created_at).toLocaleDateString()}</p>
+                  </div>
+                </div>
+
+                {order.items && order.items.length > 0 && (
+                  <div className="mt-3 pt-3 border-t border-gray-200/15 dark:border-white/[0.04]">
+                    <div className="flex flex-wrap gap-1">
+                      {order.items.map(item => (
+                        <span key={item.id} className="text-[10px] bg-white/30 dark:bg-white/[0.03] px-2 py-0.5 rounded text-gray-500 dark:text-white/30">
+                          x{item.quantity}
+                        </span>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </div>
+            ))}
+          </div>
+        </section>
+      )}
+
       <footer className="pt-6 border-t border-gray-200/20 dark:border-white/[0.04]">
          <p className="text-center text-xs text-gray-400 dark:text-white/15">Showing {orders.length} total assignments</p>
       </footer>

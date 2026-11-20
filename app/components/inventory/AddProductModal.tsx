@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState } from 'react';
-import { X } from 'lucide-react';
+import { X, Package } from 'lucide-react';
 import { Product } from '@/app/types';
 
 interface AddProductModalProps {
@@ -11,14 +11,14 @@ interface AddProductModalProps {
 }
 
 const AddProductModal: React.FC<AddProductModalProps> = ({ isOpen, onClose, onAddProduct }) => {
-  const [newProduct, setNewProduct] = useState({ name: '', sku: '', stock: '', price: '' });
+  const [newProduct, setNewProduct] = useState({ name: '', sku: '', quantity: '', price: '', buyPrice: '' });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
-    if (!newProduct.name || !newProduct.sku || !newProduct.stock || !newProduct.price) return;
+
+    if (!newProduct.name || !newProduct.sku || !newProduct.quantity || !newProduct.price || !newProduct.buyPrice) return;
 
     setLoading(true);
     setError(null);
@@ -27,13 +27,14 @@ const AddProductModal: React.FC<AddProductModalProps> = ({ isOpen, onClose, onAd
       const product: Omit<Product, 'id'> = {
         name: newProduct.name,
         sku: newProduct.sku,
-        stock: parseInt(newProduct.stock, 10),
+        quantity: parseInt(newProduct.quantity, 10),
         price: parseFloat(newProduct.price),
+        buyPrice: parseFloat(newProduct.buyPrice),
         lastUpdated: new Date().toISOString().split('T')[0],
       };
 
       await onAddProduct(product);
-      setNewProduct({ name: '', sku: '', stock: '', price: '' });
+      setNewProduct({ name: '', sku: '', quantity: '', price: '', buyPrice: '' });
       onClose();
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to add product');
@@ -49,81 +50,94 @@ const AddProductModal: React.FC<AddProductModalProps> = ({ isOpen, onClose, onAd
 
   if (!isOpen) return null;
 
+  const fieldCls = "w-full rounded-xl px-3.5 py-2.5 text-sm text-gray-800 dark:text-white/85 bg-white/60 dark:bg-white/[0.05] border border-gray-200/60 dark:border-white/[0.08] focus:ring-2 focus:ring-blue-500/20 dark:focus:ring-blue-400/20 focus:border-blue-400/50 dark:focus:border-blue-400/30 focus:outline-none transition-all duration-150 placeholder-gray-400 dark:placeholder-white/20";
+
   return (
-    <div className="fixed inset-0 bg-black/20 dark:bg-black/60 backdrop-blur-md flex justify-center items-center z-50 p-4 overflow-y-auto">
-      <div className="bg-white/60 dark:bg-white/[0.05] backdrop-blur-3xl p-6 sm:p-8 rounded-2xl shadow-[0_24px_80px_rgba(0,0,0,0.1)] dark:shadow-[0_24px_80px_rgba(0,0,0,0.6),inset_0_1px_0_rgba(255,255,255,0.08)] w-full max-w-lg border border-white/50 dark:border-white/[0.1] dark:border-t-white/[0.18] my-auto">
-        <div className="flex justify-between items-center mb-6">
-          <h2 className="text-xl font-bold text-gray-800 dark:text-white/90">Add New Product</h2>
-          <button onClick={onClose} className="p-2 rounded-xl text-gray-400 dark:text-white/30 hover:text-gray-600 dark:hover:text-white/60 hover:bg-white/50 dark:hover:bg-white/[0.06] transition-all duration-200">
-            <X className="w-5 h-5" />
+    <div className="fixed inset-0 bg-black/30 dark:bg-black/60 backdrop-blur-sm flex justify-center items-center z-50 p-4 overflow-y-auto">
+      <div className="bg-white dark:bg-[#16181f] w-full max-w-md rounded-2xl shadow-2xl dark:shadow-[0_32px_80px_rgba(0,0,0,0.7)] border border-gray-200/80 dark:border-white/[0.07] my-auto overflow-hidden">
+
+        {/* Modal header */}
+        <div className="flex items-center justify-between px-6 py-5 border-b border-gray-100 dark:border-white/[0.06]">
+          <div className="flex items-center gap-3">
+            <div className="w-8 h-8 rounded-lg bg-blue-50 dark:bg-blue-500/10 flex items-center justify-center">
+              <Package className="w-4 h-4 text-blue-600 dark:text-blue-400" />
+            </div>
+            <div>
+              <h2 className="text-base font-semibold text-gray-900 dark:text-white leading-none">Add Product</h2>
+              <p className="text-xs text-gray-400 dark:text-white/30 mt-0.5">New item to your inventory</p>
+            </div>
+          </div>
+          <button
+            onClick={onClose}
+            className="w-8 h-8 rounded-lg flex items-center justify-center text-gray-400 dark:text-white/30 hover:bg-gray-100 dark:hover:bg-white/[0.06] hover:text-gray-600 dark:hover:text-white/60 transition-all"
+          >
+            <X className="w-4 h-4" />
           </button>
         </div>
-        <form onSubmit={handleSubmit} className="space-y-4">
-          <div>
-            <label htmlFor="name" className="block text-sm font-medium text-gray-600 dark:text-white/40 mb-2">Product Name</label>
-            <input
-              type="text"
-              name="name"
-              id="name"
-              value={newProduct.name}
-              onChange={handleInputChange}
-              className="w-full rounded-xl p-3 text-sm text-gray-700 dark:text-white/80 bg-white/50 dark:bg-white/[0.04] border border-white/40 dark:border-white/[0.08] dark:border-t-white/[0.12] focus:ring-2 focus:ring-blue-400/30 dark:focus:ring-indigo-400/20 focus:border-blue-400/40 dark:focus:border-indigo-400/30 focus:outline-none backdrop-blur-sm transition-all duration-200 dark:shadow-[inset_0_1px_0_rgba(255,255,255,0.03)]"
-              required
-            />
-          </div>
-          <div>
-            <label htmlFor="sku" className="block text-sm font-medium text-gray-600 dark:text-white/40 mb-2">SKU</label>
-            <input
-              type="text"
-              name="sku"
-              id="sku"
-              value={newProduct.sku}
-              onChange={handleInputChange}
-              className="w-full rounded-xl p-3 text-sm text-gray-700 dark:text-white/80 bg-white/50 dark:bg-white/[0.04] border border-white/40 dark:border-white/[0.08] dark:border-t-white/[0.12] focus:ring-2 focus:ring-blue-400/30 dark:focus:ring-indigo-400/20 focus:border-blue-400/40 dark:focus:border-indigo-400/30 focus:outline-none backdrop-blur-sm transition-all duration-200 dark:shadow-[inset_0_1px_0_rgba(255,255,255,0.03)]"
-              required
-            />
-          </div>
-          <div className="grid grid-cols-2 gap-4">
+
+        <form onSubmit={handleSubmit} className="p-6 space-y-4">
+          {/* Identity */}
+          <div className="space-y-3">
             <div>
-              <label htmlFor="stock" className="block text-sm font-medium text-gray-600 dark:text-white/40 mb-2">Stock Quantity</label>
-              <input
-                type="number"
-                name="stock"
-                id="stock"
-                value={newProduct.stock}
-                onChange={handleInputChange}
-                className="w-full rounded-xl p-3 text-sm text-gray-700 dark:text-white/80 bg-white/50 dark:bg-white/[0.04] border border-white/40 dark:border-white/[0.08] dark:border-t-white/[0.12] focus:ring-2 focus:ring-blue-400/30 dark:focus:ring-indigo-400/20 focus:border-blue-400/40 dark:focus:border-indigo-400/30 focus:outline-none backdrop-blur-sm transition-all duration-200 dark:shadow-[inset_0_1px_0_rgba(255,255,255,0.03)]"
-                min="0"
-                required
-              />
+              <label htmlFor="name" className="block text-xs font-semibold text-gray-500 dark:text-white/40 uppercase tracking-wider mb-1.5">Product Name</label>
+              <input type="text" name="name" id="name" value={newProduct.name} onChange={handleInputChange} className={fieldCls} placeholder="e.g. Wireless Earbuds Pro" required />
             </div>
             <div>
-              <label htmlFor="price" className="block text-sm font-medium text-gray-600 dark:text-white/40 mb-2">Price ($)</label>
-              <input
-                type="number"
-                name="price"
-                id="price"
-                value={newProduct.price}
-                onChange={handleInputChange}
-                className="w-full rounded-xl p-3 text-sm text-gray-700 dark:text-white/80 bg-white/50 dark:bg-white/[0.04] border border-white/40 dark:border-white/[0.08] dark:border-t-white/[0.12] focus:ring-2 focus:ring-blue-400/30 dark:focus:ring-indigo-400/20 focus:border-blue-400/40 dark:focus:border-indigo-400/30 focus:outline-none backdrop-blur-sm transition-all duration-200 dark:shadow-[inset_0_1px_0_rgba(255,255,255,0.03)]"
-                step="0.01"
-                min="0"
-                required
-              />
+              <label htmlFor="sku" className="block text-xs font-semibold text-gray-500 dark:text-white/40 uppercase tracking-wider mb-1.5">SKU</label>
+              <input type="text" name="sku" id="sku" value={newProduct.sku} onChange={handleInputChange} className={`${fieldCls} font-mono`} placeholder="e.g. WEP-001" required />
             </div>
           </div>
+
+          {/* Divider */}
+          <div className="border-t border-gray-100 dark:border-white/[0.05]" />
+
+          {/* Pricing & stock */}
+          <div>
+            <p className="text-xs font-semibold text-gray-400 dark:text-white/25 uppercase tracking-wider mb-3">Pricing & Stock</p>
+            <div className="grid grid-cols-3 gap-3">
+              <div>
+                <label htmlFor="quantity" className="block text-xs font-medium text-gray-500 dark:text-white/35 mb-1.5">Quantity</label>
+                <input type="number" name="quantity" id="quantity" value={newProduct.quantity} onChange={handleInputChange} className={fieldCls} min="0" placeholder="0" required />
+              </div>
+              <div>
+                <label htmlFor="buyPrice" className="block text-xs font-medium text-gray-500 dark:text-white/35 mb-1.5">Buy Price</label>
+                <div className="relative">
+                  <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 dark:text-white/25 text-sm">$</span>
+                  <input type="number" name="buyPrice" id="buyPrice" value={newProduct.buyPrice} onChange={handleInputChange} className={`${fieldCls} pl-7`} step="0.01" min="0" placeholder="0.00" required />
+                </div>
+              </div>
+              <div>
+                <label htmlFor="price" className="block text-xs font-medium text-gray-500 dark:text-white/35 mb-1.5">Sell Price</label>
+                <div className="relative">
+                  <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 dark:text-white/25 text-sm">$</span>
+                  <input type="number" name="price" id="price" value={newProduct.price} onChange={handleInputChange} className={`${fieldCls} pl-7`} step="0.01" min="0" placeholder="0.00" required />
+                </div>
+              </div>
+            </div>
+            {newProduct.price && newProduct.buyPrice && (
+              <div className="mt-2.5 px-3 py-2 rounded-lg bg-emerald-50 dark:bg-emerald-500/8 border border-emerald-100 dark:border-emerald-500/15">
+                <p className="text-xs text-emerald-600 dark:text-emerald-400">
+                  Margin: <span className="font-semibold">${(parseFloat(newProduct.price || '0') - parseFloat(newProduct.buyPrice || '0')).toFixed(2)}</span>
+                  {parseFloat(newProduct.buyPrice) > 0 && (
+                    <span className="ml-1.5 opacity-70">({(((parseFloat(newProduct.price || '0') - parseFloat(newProduct.buyPrice || '0')) / parseFloat(newProduct.buyPrice || '1')) * 100).toFixed(0)}%)</span>
+                  )}
+                </p>
+              </div>
+            )}
+          </div>
+
           {error && (
-            <div className="p-3 rounded-xl bg-red-50/50 dark:bg-red-500/10 border border-red-200/50 dark:border-red-500/20 text-red-600 dark:text-red-400 text-sm">
+            <div className="px-3 py-2.5 rounded-xl bg-red-50 dark:bg-red-500/10 border border-red-200/60 dark:border-red-500/20 text-red-600 dark:text-red-400 text-sm">
               {error}
             </div>
           )}
-          <div className="pt-2">
-            <button
-              type="submit"
-              disabled={loading}
-              className="w-full py-3 bg-gradient-to-r from-blue-500 to-indigo-600 text-white font-semibold rounded-xl shadow-lg shadow-blue-500/20 hover:shadow-blue-500/30 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed text-sm"
-            >
-              {loading ? 'Saving...' : 'Save Product'}
+
+          <div className="flex gap-3 pt-1">
+            <button type="button" onClick={onClose} className="flex-1 py-2.5 rounded-xl border border-gray-200 dark:border-white/[0.08] text-gray-500 dark:text-white/40 text-sm font-medium hover:bg-gray-50 dark:hover:bg-white/[0.04] transition-all">
+              Cancel
+            </button>
+            <button type="submit" disabled={loading} className="flex-1 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-500 text-white text-sm font-semibold shadow-lg shadow-blue-500/20 transition-all disabled:opacity-50 disabled:cursor-not-allowed">
+              {loading ? 'Saving…' : 'Save Product'}
             </button>
           </div>
         </form>

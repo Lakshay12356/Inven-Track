@@ -1,14 +1,14 @@
 'use client';
 
 import React, { useState } from 'react';
-import { X, Plus, Trash2 } from 'lucide-react';
+import { X, Plus, Trash2, Truck } from 'lucide-react';
 import { Product, DeliveryPartner } from '@/app/types';
 
 interface DeliveryItem {
   productId: string | number;
   productName: string;
   sku: string;
-  availableStock: number;
+  availableQuantity: number;
   quantity: number;
 }
 
@@ -44,7 +44,7 @@ const AssignDeliveryModal: React.FC<AssignDeliveryModalProps> = ({
   const [error, setError] = useState<string | null>(null);
 
   const availableProducts = products.filter(
-    p => p.stock > 0 && !deliveryItems.some(item => item.productId === p.id)
+    p => p.quantity > 0 && !deliveryItems.some(item => item.productId === p.id)
   );
 
   const handleAddProduct = () => {
@@ -57,7 +57,7 @@ const AssignDeliveryModal: React.FC<AssignDeliveryModalProps> = ({
         productId: product.id,
         productName: product.name,
         sku: product.sku,
-        availableStock: product.stock,
+        availableQuantity: product.quantity,
         quantity: 1,
       },
     ]);
@@ -69,7 +69,7 @@ const AssignDeliveryModal: React.FC<AssignDeliveryModalProps> = ({
 
   const handleQuantityChange = (index: number, quantity: number) => {
     const item = deliveryItems[index];
-    const newQuantity = Math.max(1, Math.min(quantity, item.availableStock));
+    const newQuantity = Math.max(1, Math.min(quantity, item.availableQuantity));
     
     setDeliveryItems(
       deliveryItems.map((item, i) =>
@@ -79,12 +79,11 @@ const AssignDeliveryModal: React.FC<AssignDeliveryModalProps> = ({
   };
 
   const handleProductChange = (index: number, productId: string | number) => {
-    // string comparison safe
     const product = products.find(p => String(p.id) === String(productId));
     if (!product) return;
 
     const item = deliveryItems[index];
-    const maxQuantity = Math.min(item.quantity, product.stock);
+    const maxQuantity = Math.min(item.quantity, product.quantity);
     
     setDeliveryItems(
       deliveryItems.map((item, i) =>
@@ -94,7 +93,7 @@ const AssignDeliveryModal: React.FC<AssignDeliveryModalProps> = ({
               productId: product.id,
               productName: product.name,
               sku: product.sku,
-              availableStock: product.stock,
+              availableQuantity: product.quantity,
               quantity: maxQuantity,
             }
           : item
@@ -158,26 +157,37 @@ const AssignDeliveryModal: React.FC<AssignDeliveryModalProps> = ({
 
   if (!isOpen) return null;
 
-  const inputClasses = "w-full rounded-xl p-3 text-sm text-gray-700 dark:text-white/80 bg-white/50 dark:bg-white/[0.04] border border-white/40 dark:border-white/[0.08] dark:border-t-white/[0.12] focus:ring-2 focus:ring-indigo-400/30 dark:focus:ring-indigo-400/20 focus:border-indigo-400/40 dark:focus:border-indigo-400/30 focus:outline-none backdrop-blur-sm transition-all duration-200 dark:shadow-[inset_0_1px_0_rgba(255,255,255,0.03)]";
+  const inputClasses = "w-full rounded-xl px-3.5 py-2.5 text-sm text-gray-800 dark:text-white/85 bg-white/60 dark:bg-white/[0.05] border border-gray-200/60 dark:border-white/[0.08] focus:ring-2 focus:ring-indigo-500/20 dark:focus:ring-indigo-400/20 focus:border-indigo-400/50 dark:focus:border-indigo-400/30 focus:outline-none transition-all duration-150 placeholder-gray-400 dark:placeholder-white/20";
 
   return (
-    <div className="fixed inset-0 bg-black/20 dark:bg-black/60 backdrop-blur-md flex justify-center items-center z-50 p-4 overflow-y-auto">
-      <div className="bg-white/60 dark:bg-white/[0.05] backdrop-blur-3xl p-6 sm:p-8 rounded-2xl shadow-[0_24px_80px_rgba(0,0,0,0.1)] dark:shadow-[0_24px_80px_rgba(0,0,0,0.6),inset_0_1px_0_rgba(255,255,255,0.08)] w-full max-w-3xl border border-white/50 dark:border-white/[0.1] dark:border-t-white/[0.18] my-auto max-h-[90vh] overflow-y-auto">
-        <div className="flex justify-between items-center mb-6">
-          <h2 className="text-xl font-bold text-gray-800 dark:text-white/90">Assign Delivery</h2>
+    <div className="fixed inset-0 bg-black/30 dark:bg-black/60 backdrop-blur-sm flex justify-center items-center z-50 p-4 overflow-y-auto">
+      <div className="bg-white dark:bg-[#16181f] w-full max-w-2xl rounded-2xl shadow-2xl dark:shadow-[0_32px_80px_rgba(0,0,0,0.7)] border border-gray-200/80 dark:border-white/[0.07] my-auto overflow-hidden max-h-[90vh] flex flex-col">
+
+        {/* Modal header */}
+        <div className="flex items-center justify-between px-6 py-5 border-b border-gray-100 dark:border-white/[0.06] flex-shrink-0">
+          <div className="flex items-center gap-3">
+            <div className="w-8 h-8 rounded-lg bg-indigo-50 dark:bg-indigo-500/10 flex items-center justify-center">
+              <Truck className="w-4 h-4 text-indigo-600 dark:text-indigo-400" />
+            </div>
+            <div>
+              <h2 className="text-base font-semibold text-gray-900 dark:text-white leading-none">New Delivery</h2>
+              <p className="text-xs text-gray-400 dark:text-white/30 mt-0.5">Assign products to a delivery partner</p>
+            </div>
+          </div>
           <button
             onClick={onClose}
-            className="p-2 rounded-xl text-gray-400 dark:text-white/30 hover:text-gray-600 dark:hover:text-white/60 hover:bg-white/50 dark:hover:bg-white/[0.06] transition-all duration-200"
+            className="w-8 h-8 rounded-lg flex items-center justify-center text-gray-400 dark:text-white/30 hover:bg-gray-100 dark:hover:bg-white/[0.06] hover:text-gray-600 dark:hover:text-white/60 transition-all"
           >
-            <X className="w-5 h-5" />
+            <X className="w-4 h-4" />
           </button>
         </div>
+        <div className="overflow-y-auto flex-1">
 
-        <form onSubmit={handleSubmit} className="space-y-5">
+        <form onSubmit={handleSubmit} className="p-6 space-y-5">
           {/* Delivery Partner Selection */}
           <div>
-            <label htmlFor="partner" className="block text-sm font-medium text-gray-600 dark:text-white/40 mb-2">
-              Delivery Partner *
+            <label htmlFor="partner" className="block text-xs font-semibold text-gray-500 dark:text-white/40 uppercase tracking-wider mb-1.5">
+              Delivery Partner
             </label>
             <select
               id="partner"
@@ -197,11 +207,13 @@ const AssignDeliveryModal: React.FC<AssignDeliveryModalProps> = ({
             </select>
           </div>
 
+          <div className="border-t border-gray-100 dark:border-white/[0.05]" />
+
           {/* Products Section */}
           <div>
             <div className="flex justify-between items-center mb-3">
-              <label className="block text-sm font-medium text-gray-600 dark:text-white/40">
-                Products to Deliver *
+              <label className="block text-xs font-semibold text-gray-500 dark:text-white/40 uppercase tracking-wider">
+                Products to Deliver
               </label>
               <button
                 type="button"
@@ -233,10 +245,10 @@ const AssignDeliveryModal: React.FC<AssignDeliveryModalProps> = ({
                           className={inputClasses}
                         >
                           {products
-                            .filter(p => p.stock > 0 && (p.id === item.productId || !deliveryItems.some(di => di.productId === p.id && di !== item)))
+                            .filter(p => p.quantity > 0 && (p.id === item.productId || !deliveryItems.some(di => di.productId === p.id && di !== item)))
                             .map(p => (
                               <option key={p.id} value={p.id} className="dark:bg-slate-900">
-                                {p.name} (SKU: {p.sku}, Stock: {p.stock})
+                                {p.name} (SKU: {p.sku}, Qty: {p.quantity})
                               </option>
                             ))}
                         </select>
@@ -246,12 +258,12 @@ const AssignDeliveryModal: React.FC<AssignDeliveryModalProps> = ({
                         <input
                           type="number"
                           min="1"
-                          max={item.availableStock}
+                          max={item.availableQuantity}
                           value={item.quantity}
                           onChange={(e) => handleQuantityChange(index, parseInt(e.target.value, 10) || 1)}
                           className="w-20 rounded-xl p-2 text-sm text-gray-700 dark:text-white/80 bg-white/50 dark:bg-white/[0.04] border border-white/40 dark:border-white/[0.08] focus:ring-2 focus:ring-indigo-400/30 dark:focus:ring-indigo-400/20 focus:outline-none transition-all dark:shadow-[inset_0_1px_0_rgba(255,255,255,0.03)]"
                         />
-                        <span className="text-xs text-gray-400 dark:text-white/20">/ {item.availableStock}</span>
+                        <span className="text-xs text-gray-400 dark:text-white/20">/ {item.availableQuantity}</span>
                         <button
                           type="button"
                           onClick={() => handleRemoveProduct(index)}
@@ -267,13 +279,15 @@ const AssignDeliveryModal: React.FC<AssignDeliveryModalProps> = ({
             )}
           </div>
 
+          <div className="border-t border-gray-100 dark:border-white/[0.05]" />
+
           {/* Customer Information */}
-          <div className="space-y-4">
-            <h3 className="text-base font-semibold text-gray-800 dark:text-white/90">Customer Information</h3>
-            
+          <div className="space-y-3.5">
+            <p className="text-xs font-semibold text-gray-500 dark:text-white/40 uppercase tracking-wider">Customer Information</p>
+
             <div>
-              <label htmlFor="customerName" className="block text-sm font-medium text-gray-600 dark:text-white/40 mb-2">
-                Customer Name *
+              <label htmlFor="customerName" className="block text-xs font-medium text-gray-500 dark:text-white/35 mb-1.5">
+                Customer Name
               </label>
               <input
                 type="text"
@@ -285,9 +299,9 @@ const AssignDeliveryModal: React.FC<AssignDeliveryModalProps> = ({
               />
             </div>
 
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               <div>
-                <label htmlFor="customerEmail" className="block text-sm font-medium text-gray-600 dark:text-white/40 mb-2">
+                <label htmlFor="customerEmail" className="block text-xs font-medium text-gray-500 dark:text-white/35 mb-1.5">
                   Email
                 </label>
                 <input
@@ -300,7 +314,7 @@ const AssignDeliveryModal: React.FC<AssignDeliveryModalProps> = ({
               </div>
 
               <div>
-                <label htmlFor="customerPhone" className="block text-sm font-medium text-gray-600 dark:text-white/40 mb-2">
+                <label htmlFor="customerPhone" className="block text-xs font-medium text-gray-500 dark:text-white/35 mb-1.5">
                   Phone
                 </label>
                 <input
@@ -314,8 +328,8 @@ const AssignDeliveryModal: React.FC<AssignDeliveryModalProps> = ({
             </div>
 
             <div>
-              <label htmlFor="deliveryAddress" className="block text-sm font-medium text-gray-600 dark:text-white/40 mb-2">
-                Delivery Address *
+              <label htmlFor="deliveryAddress" className="block text-xs font-medium text-gray-500 dark:text-white/35 mb-1.5">
+                Delivery Address
               </label>
               <textarea
                 id="deliveryAddress"
@@ -334,24 +348,25 @@ const AssignDeliveryModal: React.FC<AssignDeliveryModalProps> = ({
             </div>
           )}
 
-          <div className="pt-2 flex gap-3">
+          <div className="flex gap-3 pt-1">
             <button
               type="button"
               onClick={onClose}
               disabled={loading}
-              className="flex-1 py-3 bg-white/40 dark:bg-white/[0.05] border border-white/40 dark:border-white/[0.08] rounded-xl text-gray-500 dark:text-white/40 font-medium hover:bg-white/60 dark:hover:bg-white/[0.08] transition-all text-sm disabled:opacity-50 disabled:cursor-not-allowed dark:shadow-[inset_0_1px_0_rgba(255,255,255,0.03)]"
+              className="flex-1 py-2.5 rounded-xl border border-gray-200 dark:border-white/[0.08] text-gray-500 dark:text-white/40 text-sm font-medium hover:bg-gray-50 dark:hover:bg-white/[0.04] transition-all disabled:opacity-50"
             >
               Cancel
             </button>
             <button
               type="submit"
               disabled={loading || deliveryItems.length === 0 || !selectedPartner}
-              className="flex-1 py-3 bg-gradient-to-r from-indigo-500 to-purple-600 text-white font-semibold rounded-xl shadow-lg shadow-indigo-500/20 hover:shadow-indigo-500/30 transition-all text-sm disabled:opacity-50 disabled:cursor-not-allowed"
+              className="flex-1 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white text-sm font-semibold shadow-lg shadow-indigo-500/20 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              {loading ? 'Assigning...' : 'Assign Delivery'}
+              {loading ? 'Assigning…' : 'Assign Delivery'}
             </button>
           </div>
         </form>
+        </div>
       </div>
     </div>
   );

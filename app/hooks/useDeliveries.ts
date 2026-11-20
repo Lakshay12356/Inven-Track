@@ -37,11 +37,11 @@ export const useDeliveries = () => {
     fetchOrders();
   }, [fetchOrders]);
 
-  const createOrder = async (data: Omit<CreateOrderData, 'managerId'>) => {
+  const createOrder = async (data: CreateOrderData) => {
     if (!user?.id) throw new Error('User not authenticated');
-    
+
     try {
-      const newOrder = await apiCreateOrder({ ...data, managerId: user.id });
+      const newOrder = await apiCreateOrder(data);
       setDeliveries(prev => [newOrder, ...prev]);
       return newOrder;
     } catch (err) {

@@ -29,37 +29,20 @@ export const getBranches = async (clerkUserId: string, email?: string): Promise<
   return data || [];
 };
 
+// H-03: mutations go through server API route — user identity derived server-side from auth()
 export const addBranch = async (
   branch: { name: string; location?: string },
-  clerkUserId: string,
-  email?: string
+  _clerkUserId?: string,
+  _email?: string
 ): Promise<BranchData> => {
-  const supabase = createClient();
-  const userId = await getOrCreateUser(clerkUserId, email);
-
-  const { data, error } = await supabase
-    .from('branches')
-    .insert([{
-      user_id: userId,
-      name: branch.name,
-      location: branch.location || null,
-    }])
-    .select()
-    .single();
-
-  if (error) {
-    console.error('Error adding branch:', error);
-    throw error;
+  const res = await fetch('/api/branches', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ name: branch.name, location: branch.location }),
+  });
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}));
+    throw new Error(err.error || 'Failed to add branch');
   }
-
-  // Auto-create a store for the new branch
-  try {
-    await supabase
-      .from('stores')
-      .insert({ branch_id: data.id, name: `${branch.name} Store`, type: 'warehouse_store' });
-  } catch (err) {
-    console.error('Failed to auto-create store for branch:', err);
-  }
-
-  return data;
+  return res.json();
 };

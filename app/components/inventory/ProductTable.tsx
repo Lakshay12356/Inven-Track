@@ -22,8 +22,10 @@ const ProductTable: React.FC<ProductTableProps> = ({ products, searchTerm }) => 
             <tr className="bg-white/30 dark:bg-white/[0.02]">
               <th className="px-4 sm:px-6 py-3.5 text-left text-[11px] font-semibold text-gray-500 dark:text-white/30 uppercase tracking-wider">Product Name</th>
               <th className="px-4 sm:px-6 py-3.5 text-left text-[11px] font-semibold text-gray-500 dark:text-white/30 uppercase tracking-wider">SKU</th>
-              <th className="px-4 sm:px-6 py-3.5 text-left text-[11px] font-semibold text-gray-500 dark:text-white/30 uppercase tracking-wider">Stock</th>
-              <th className="px-4 sm:px-6 py-3.5 text-left text-[11px] font-semibold text-gray-500 dark:text-white/30 uppercase tracking-wider">Price</th>
+              <th className="px-4 sm:px-6 py-3.5 text-left text-[11px] font-semibold text-gray-500 dark:text-white/30 uppercase tracking-wider">Quantity</th>
+              <th className="px-4 sm:px-6 py-3.5 text-left text-[11px] font-semibold text-gray-500 dark:text-white/30 uppercase tracking-wider">Buy Price</th>
+              <th className="px-4 sm:px-6 py-3.5 text-left text-[11px] font-semibold text-gray-500 dark:text-white/30 uppercase tracking-wider">Sell Price</th>
+              <th className="px-4 sm:px-6 py-3.5 text-left text-[11px] font-semibold text-gray-500 dark:text-white/30 uppercase tracking-wider">Profit</th>
               <th className="px-4 sm:px-6 py-3.5 text-left text-[11px] font-semibold text-gray-500 dark:text-white/30 uppercase tracking-wider hidden sm:table-cell">Last Updated</th>
             </tr>
           </thead>
@@ -33,18 +35,24 @@ const ProductTable: React.FC<ProductTableProps> = ({ products, searchTerm }) => 
                 <td className="px-4 sm:px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-800 dark:text-white/85">{product.name}</td>
                 <td className="px-4 sm:px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-white/35 font-mono">{product.sku}</td>
                 <td className="px-4 sm:px-6 py-4 whitespace-nowrap">
-                  <span className={`inline-flex items-center gap-1.5 text-sm font-semibold ${product.stock < 50 ? 'text-red-500 dark:text-red-400' : 'text-emerald-600 dark:text-emerald-400'}`}>
-                    <span className={`w-1.5 h-1.5 rounded-full ${product.stock < 50 ? 'bg-red-400 dark:shadow-[0_0_4px_rgba(239,68,68,0.4)]' : 'bg-emerald-400 dark:shadow-[0_0_4px_rgba(52,211,153,0.4)]'}`} />
-                    {product.stock}
+                  <span className={`inline-flex items-center gap-1.5 text-sm font-semibold ${product.quantity < 50 ? 'text-red-500 dark:text-red-400' : 'text-emerald-600 dark:text-emerald-400'}`}>
+                    <span className={`w-1.5 h-1.5 rounded-full ${product.quantity < 50 ? 'bg-red-400 dark:shadow-[0_0_4px_rgba(239,68,68,0.4)]' : 'bg-emerald-400 dark:shadow-[0_0_4px_rgba(52,211,153,0.4)]'}`} />
+                    {product.quantity}
                   </span>
                 </td>
-                <td className="px-4 sm:px-6 py-4 whitespace-nowrap text-sm text-gray-600 dark:text-white/50">${product.price.toFixed(2)}</td>
+                <td className="px-4 sm:px-6 py-4 whitespace-nowrap text-sm text-gray-600 dark:text-white/50 font-medium">${product.buyPrice?.toFixed(2) || '0.00'}</td>
+                <td className="px-4 sm:px-6 py-4 whitespace-nowrap text-sm text-gray-600 dark:text-white/50 font-medium">${product.price.toFixed(2)}</td>
+                <td className="px-4 sm:px-6 py-4 whitespace-nowrap">
+                  <span className={`inline-flex items-center text-xs font-bold ${product.price - (product.buyPrice || 0) > 0 ? 'text-emerald-500' : 'text-red-500'}`}>
+                    ${(product.price - (product.buyPrice || 0)).toFixed(2)}
+                  </span>
+                </td>
                 <td className="px-4 sm:px-6 py-4 whitespace-nowrap text-sm text-gray-400 dark:text-white/25 hidden sm:table-cell">{product.lastUpdated}</td>
               </tr>
             ))}
             {filteredProducts.length === 0 && (
               <tr>
-                <td colSpan={5} className="text-center py-12 text-gray-400 dark:text-white/25 px-4">
+                <td colSpan={7} className="text-center py-12 text-gray-400 dark:text-white/25 px-4">
                   No products found matching &quot;{searchTerm}&quot;.
                 </td>
               </tr>
